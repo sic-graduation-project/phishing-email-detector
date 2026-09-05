@@ -1,0 +1,17 @@
+# Backend
+fastapi
+uvicorn
+
+# Data Processing
+pandas
+numpy
+
+# Machine Learning
+scikit-learn
+joblib
+
+# NLP
+nltk
+
+# Utilities
+python-dotenv
