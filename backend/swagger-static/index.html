@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phishing Email Detector API Documentation</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #f7f8fa;
+    }
+    .topbar {
+      display: none;
+    }
+    .static-note {
+      padding: 14px 28px;
+      background: #17324d;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="static-note">
+    Static API documentation only. This page does not connect to any live backend, and Try it out is disabled.
+  </div>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    const spec = {
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Phishing Email Detector API",
+    "description": "\nBackend API for the Nexus team graduation project.\n\nThe current analysis logic is a clear mock placeholder until the final NLP,\nURL/Sender Analysis, and Machine Learning components are connected.\n",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "summary": "Check backend health",
+        "description": "Returns a simple response to confirm that the backend is running.",
+        "operationId": "health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyze/email": {
+      "post": {
+        "tags": [
+          "Email Analysis"
+        ],
+        "summary": "Analyze an email",
+        "description": "Analyzes an email subject and body using temporary mock logic.",
+        "operationId": "analyze_email_endpoint_api_v1_analyze_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyze/url": {
+      "post": {
+        "tags": [
+          "URL Analysis"
+        ],
+        "summary": "Analyze a URL",
+        "description": "Analyzes a single URL using temporary mock logic.",
+        "operationId": "analyze_url_endpoint_api_v1_analyze_url_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/URLAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyze/text": {
+      "post": {
+        "tags": [
+          "Text Analysis"
+        ],
+        "summary": "Analyze plain text",
+        "description": "Analyzes plain text using temporary mock logic.",
+        "operationId": "analyze_text_endpoint_api_v1_analyze_text_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TextAnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnalysisResponse": {
+        "properties": {
+          "input_type": {
+            "type": "string",
+            "enum": [
+              "email",
+              "url",
+              "text"
+            ],
+            "title": "Input Type",
+            "examples": [
+              "email"
+            ]
+          },
+          "classification": {
+            "type": "string",
+            "enum": [
+              "Phishing",
+              "Legitimate"
+            ],
+            "title": "Classification",
+            "examples": [
+              "Phishing"
+            ]
+          },
+          "risk_score": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Risk Score",
+            "examples": [
+              85
+            ]
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons",
+            "examples": [
+              [
+                "Mock indicator: suspicious language placeholder"
+              ]
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "input_type",
+          "classification",
+          "risk_score",
+          "reasons"
+        ],
+        "title": "AnalysisResponse"
+      },
+      "EmailAnalysisRequest": {
+        "properties": {
+          "subject": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject",
+            "description": "Optional email subject.",
+            "examples": [
+              "Account verification required"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Body",
+            "description": "Email body text. It cannot be empty.",
+            "examples": [
+              "Please verify your account by clicking the link."
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "title": "EmailAnalysisRequest"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "examples": [
+              "Request body is invalid."
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "examples": [
+              "ok"
+            ]
+          },
+          "service": {
+            "type": "string",
+            "title": "Service",
+            "examples": [
+              "Phishing Email Detector API"
+            ]
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "examples": [
+              "1.0.0"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "version"
+        ],
+        "title": "HealthResponse"
+      },
+      "TextAnalysisRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text",
+            "description": "Plain text to analyze. It cannot be empty.",
+            "examples": [
+              "Your account will be locked unless you verify it now."
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "TextAnalysisRequest"
+      },
+      "URLAnalysisRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Url",
+            "description": "A single URL to analyze.",
+            "examples": [
+              "https://example.com/login"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "URLAnalysisRequest"
+      },
+      "ValidationErrorResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "examples": [
+              "Validation error"
+            ]
+          },
+          "errors": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Errors",
+            "examples": [
+              [
+                {
+                  "input": "",
+                  "loc": [
+                    "body",
+                    "text"
+                  ],
+                  "msg": "String should have at least 1 character",
+                  "type": "string_too_short"
+                }
+              ]
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail",
+          "errors"
+        ],
+        "title": "ValidationErrorResponse"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "System",
+      "description": "Backend status and health endpoints."
+    },
+    {
+      "name": "Email Analysis",
+      "description": "Analyze email subject and body."
+    },
+    {
+      "name": "URL Analysis",
+      "description": "Analyze a single URL."
+    },
+    {
+      "name": "Text Analysis",
+      "description": "Analyze plain text content."
+    }
+  ]
+};
+
+    window.onload = () => {
+      window.ui = SwaggerUIBundle({
+        spec,
+        dom_id: "#swagger-ui",
+        deepLinking: true,
+        supportedSubmitMethods: [],
+        presets: [SwaggerUIBundle.presets.apis],
+        layout: "BaseLayout"
+      });
+    };
+  </script>
+</body>
+</html>
