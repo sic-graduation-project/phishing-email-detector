@@ -5,14 +5,23 @@ import contractions
 import pandas as pd
 import unicodedata2 as unicodedata
 
+import nltk
+
+nltk.download("punkt")  # Download the punkt tokenizer for word tokenization
+nltk.download("stopwords")  # Download the stopwords corpus
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+
 csv_path = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "..", "src", "nlp", "CEAS_08.csv"
 )
 df = pd.read_csv(csv_path)
 
-# Keep only the "body" feature plus the label for now
-data = df[["body", "label"]].dropna()
 
+data = df[["body","subject","label"]].copy()  # Create a copy of the DataFrame with only the "body" and "label" and "subject" columns
+
+data["subject"] = data["subject"].fillna("") 
+data["body"] = data["body"].fillna("")
 
 def extract_phishing_features(text):
     # Extracts features from the email body text that may indicate phishing attempts.
@@ -56,11 +65,31 @@ def clean_text(text):
     return text
 
 
-features_df = data["body"].apply(extract_phishing_features).apply(pd.Series)  # Extract phishing features from the email body
-data = pd.concat([data, features_df], axis=1)  # Concatenate the original data with the extracted features
+stop_words = set(stopwords.words("english"))
+
+
+def tokenize_text(text):
+    tokens = word_tokenize(text)  # Split the cleaned text into word tokens
+    tokens = [token for token in tokens if token not in stop_words]  # Remove stopwords
+    return tokens
+
+
+body_features = data["body"].apply(extract_phishing_features).apply(pd.Series)  # Extract phishing features from the email body
+data = pd.concat([data, body_features], axis=1)  # Concatenate the original data with the extracted features
+
+subject_features = data["subject"].apply(extract_phishing_features).apply(pd.Series)  # Extract phishing features from the email subject
+data = pd.concat([data, subject_features], axis=1)  # Concatenate
 
 data["normalized_body"] = data["body"].apply(normalize_text)
 data["clean_body"] = data["normalized_body"].apply(clean_text)
 
+data["normalized_subject"] = data["subject"].apply(normalize_text)
+data["clean_subject"] = data["normalized_subject"].apply(clean_text)
+
+data["body_tokens"] = data["clean_body"].apply(tokenize_text)
+data["subject_tokens"] = data["clean_subject"].apply(tokenize_text)
+
 print(data.shape)
-print(data[["body", "normalized_body", "clean_body"]].head())
+print(data[["body", "normalized_body", "clean_body", "body_tokens"]].tail())
+print(data[["subject", "normalized_subject", "clean_subject", "subject_tokens"]].tail())
+
