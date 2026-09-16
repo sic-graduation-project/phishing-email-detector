@@ -216,17 +216,3 @@ print("Final test shape:", X_test_final.shape)
 
 
 
-#for modling purposes, i will save the final train and test data as sparse matrices and numpy arrays
-
-output_dir = os.path.dirname(os.path.abspath(__file__))
-artifacts_dir = os.path.join(output_dir, "artifacts")
-os.makedirs(artifacts_dir, exist_ok=True)
-
-joblib.dump(tfidf_final, os.path.join(artifacts_dir, "tfidf_vectorizer.pkl"))
-save_npz(os.path.join(artifacts_dir, "X_train_final.npz"), X_train_final)
-save_npz(os.path.join(artifacts_dir, "X_test_final.npz"), X_test_final)
-np.save(os.path.join(artifacts_dir, "y_train.npy"), y_train)
-np.save(os.path.join(artifacts_dir, "y_test.npy"), y_test)
-
-train_data.to_csv(os.path.join(artifacts_dir, "train_data.csv"), index=False)
-test_data.to_csv(os.path.join(artifacts_dir, "test_data.csv"), index=False)
