@@ -20,11 +20,13 @@ import { clearHistory, computeStats, getLocalHistory } from "../api/history";
 import type { ScanResult } from "../types";
 import StatCard from "../components/StatCard";
 import VerdictBadge from "../components/VerdictBadge";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 const PIE_COLORS: Record<string, string> = { Safe: "#10b981", Phishing: "#ef4444" };
 
 export default function DashboardPage() {
   const [history, setHistory] = useState<ScanResult[]>([]);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   useEffect(() => {
     setHistory(getLocalHistory());
@@ -35,6 +37,7 @@ export default function DashboardPage() {
   function handleClear() {
     clearHistory();
     setHistory([]);
+    setConfirmClearOpen(false);
   }
 
   const pieData = [
@@ -74,13 +77,23 @@ export default function DashboardPage() {
           </p>
         </div>
         <button
-          onClick={handleClear}
+          onClick={() => setConfirmClearOpen(true)}
           className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors"
         >
           <Trash2 size={13} />
           Clear history
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmClearOpen}
+        title="Clear scan history?"
+        message="Are you sure you want to delete all scan history? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleClear}
+        onCancel={() => setConfirmClearOpen(false)}
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total scans" value={String(stats.totalScans)} icon={ScanLine} tone="brand" />

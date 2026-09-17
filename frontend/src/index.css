@@ -36,6 +36,34 @@ body,
   height: 100%;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  /* Snappy default so buttons, inputs, icons, and other small interactive
+     elements never feel sluggish when the theme changes. */
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, border-color, color, box-shadow, fill, stroke;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
+
+  /* Slower, gentler transition on the main page surfaces (the overall
+     canvas plus the header/sidebar/content/footer chrome) so a dark <-> light
+     switch reads as a gradual dim/brighten rather than an instant flash. */
+  html,
+  body,
+  #root,
+  #root > div,
+  header,
+  aside,
+  main,
+  footer {
+    transition-property: background-color, border-color, color, box-shadow;
+    transition-duration: 400ms;
+    transition-timing-function: ease;
+  }
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);

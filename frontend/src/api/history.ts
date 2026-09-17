@@ -1,3 +1,11 @@
+/*
+مسؤول عن:
+
+حفظ نتائج الفحوصات في localStorage.
+جلب نتائج الفحوصات السابقة.
+حذف سجل الفحوصات.
+حساب إحصائيات Dashboard.
+*/
 import type { DashboardStats, ScanResult } from "../types";
 
 const STORAGE_KEY = "phishguard.scan_history";

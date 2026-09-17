@@ -1,9 +1,17 @@
+import { useState } from "react";
 import { Settings as SettingsIcon, Moon, Bell, Trash2 } from "lucide-react";
 import { useTheme } from "../hooks/useTheme";
 import { clearHistory } from "../api/history";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+
+  function handleClear() {
+    clearHistory();
+    setConfirmClearOpen(false);
+  }
 
   return (
     <div className="max-w-2xl">
@@ -71,13 +79,23 @@ export default function SettingsPage() {
             </div>
           </div>
           <button
-            onClick={() => clearHistory()}
+            onClick={() => setConfirmClearOpen(true)}
             className="rounded-lg border border-red-200 dark:border-red-500/20 px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
           >
             Clear
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmClearOpen}
+        title="Clear scan history?"
+        message="Are you sure you want to delete all scan history? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleClear}
+        onCancel={() => setConfirmClearOpen(false)}
+      />
 
       <p className="mt-6 flex items-center gap-2 text-xs text-slate-400">
         <SettingsIcon size={13} />
