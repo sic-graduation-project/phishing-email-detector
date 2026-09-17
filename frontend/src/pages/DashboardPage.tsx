@@ -188,7 +188,7 @@ export default function DashboardPage() {
               <tr className="text-left text-xs uppercase tracking-wide text-slate-400 border-b border-slate-100 dark:border-white/10">
                 <th className="px-5 py-2 font-medium">When</th>
                 <th className="px-5 py-2 font-medium">Subject</th>
-                <th className="px-5 py-2 font-medium">Sender</th>
+                <th className="px-5 py-2 font-medium">Type</th>
                 <th className="px-5 py-2 font-medium">Result</th>
               </tr>
             </thead>
@@ -204,8 +204,8 @@ export default function DashboardPage() {
                   <td className="px-5 py-3 text-slate-700 dark:text-slate-200 max-w-[260px] truncate">
                     {scan.subject || scan.snippet}
                   </td>
-                  <td className="px-5 py-3 text-slate-500 dark:text-slate-400 max-w-[200px] truncate">
-                    {scan.sender || "—"}
+                  <td className="px-5 py-3 text-slate-500 dark:text-slate-400 max-w-[200px] truncate capitalize">
+                    {scan.kind}
                   </td>
                   <td className="px-5 py-3">
                     <VerdictBadge verdict={scan.verdict} size="sm" />

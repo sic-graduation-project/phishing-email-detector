@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "../hooks/useTheme";
 import NotificationsDropdown from "./NotificationsDropdown";
+import nexusLogo from "../assets/nexus-logo.png";
 
 const navItems = [
   { to: "/", label: "Home", icon: Home, end: true },
@@ -26,12 +27,14 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col bg-[#f4f7fc] dark:bg-[#0b0f1a]">
       <header className="sticky top-0 z-30 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1420] px-4 sm:px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="grid place-items-center h-10 w-10 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-md shadow-blue-600/20">
-            <ShieldCheck size={22} strokeWidth={2.25} />
-          </div>
+          <img
+            src={nexusLogo}
+            alt="Nexus logo"
+            className="h-10 w-10 rounded-xl object-cover shadow-md shadow-blue-600/20"
+          />
           <div className="leading-tight">
             <p className="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">
-              PhishGuard
+              Nexus
             </p>
             <p className="text-[11px] text-slate-400 dark:text-slate-500">
               Detect. Protect. Stay Safe.

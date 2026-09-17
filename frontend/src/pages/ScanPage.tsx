@@ -15,10 +15,9 @@ import {
   CheckCircle2,
   ArrowRight,
   Loader2,
-  FlaskConical,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { scanEmail, inputKindLabel, type ForceVerdict } from "../api/client";
+import { scanEmail, inputKindLabel } from "../api/client";
 import { saveScanToHistory } from "../api/history";
 import type { InputKind, ScanResult } from "../types";
 import RiskGauge from "../components/RiskGauge";
@@ -27,12 +26,6 @@ const INPUT_TYPES: { kind: InputKind; label: string; icon: typeof Mail }[] = [
   { kind: "email", label: "Email", icon: Mail },
   { kind: "url", label: "URL", icon: Link2 },
   { kind: "text", label: "Text", icon: FileText },
-];
-
-const FORCE_OPTIONS: { value: ForceVerdict; label: string }[] = [
-  { value: "auto", label: "Auto (AI)" },
-  { value: "phishing", label: "Force Phishing" },
-  { value: "safe", label: "Force Safe" },
 ];
 
 const LIMITS = { subject: 200, body: 5000, url: 500 };
@@ -60,7 +53,6 @@ export default function ScanPage() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [forceVerdict, setForceVerdict] = useState<ForceVerdict>("auto");
 
   const content = inputKind === "email" ? body : inputKind === "url" ? url : text;
   const canSubmit = content.trim().length > 0 && !loading;
@@ -78,26 +70,21 @@ export default function ScanPage() {
     setError(null);
     setResult(null);
     try {
-      const scan = await scanEmail(
-        {
-          kind: inputKind,
-          subject: inputKind === "email" ? subject : undefined,
-          body: content,
-        },
-        forceVerdict
-      );
+      const scan = await scanEmail({
+        kind: inputKind,
+        subject: inputKind === "email" ? subject : undefined,
+        body: content,
+      });
       saveScanToHistory(scan);
       setResult(scan);
-    } catch {
-      setError("Something went wrong while analyzing this content. Please try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong while analyzing this content.");
     } finally {
       setLoading(false);
     }
   }
 
-  const riskScore = result
-    ? Math.round((result.verdict === "phishing" ? result.confidence : 1 - result.confidence) * 100)
-    : 0;
+  const riskScore = result ? result.riskScore : 0;
   const riskColor = riskScore >= 70 ? "#ef4444" : riskScore >= 40 ? "#f59e0b" : "#10b981";
   const riskLabel = riskScore >= 70 ? "High risk" : riskScore >= 40 ? "Medium risk" : "Low risk";
   const KindIcon = result ? INPUT_TYPES.find((t) => t.kind === result.kind)?.icon ?? FileText : FileText;
@@ -258,36 +245,6 @@ export default function ScanPage() {
                 </div>
               </div>
             )}
-
-            <div className="rounded-xl border border-dashed border-amber-300 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-500/5 p-3.5">
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
-                <FlaskConical size={13} />
-                Demo Preview Mode (temporary — remove once ML backend is live)
-              </p>
-              <p className="mt-0.5 text-xs text-amber-600/80 dark:text-amber-400/70">
-                Force the result state below to preview the UI without a real prediction.
-              </p>
-              <div className="mt-2.5 inline-flex rounded-lg bg-white dark:bg-white/10 p-1 border border-amber-200 dark:border-amber-500/20">
-                {FORCE_OPTIONS.map(({ value, label }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => setForceVerdict(value)}
-                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                      forceVerdict === value
-                        ? value === "phishing"
-                          ? "bg-red-500 text-white"
-                          : value === "safe"
-                            ? "bg-emerald-500 text-white"
-                            : "bg-blue-600 text-white"
-                        : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div>
               <button
@@ -474,15 +431,6 @@ export default function ScanPage() {
                     ))}
                   </ul>
                 </div>
-
-                {result.source === "demo" && (
-                  <div className="mt-4 flex items-center gap-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 px-3 py-2 text-xs text-blue-600 dark:text-blue-400">
-                    <Sparkles size={13} />
-                    {forceVerdict === "auto"
-                      ? "Demo mode — connect the backend API to use the trained ML model."
-                      : "Result forced via Demo Preview Mode — not a real prediction."}
-                  </div>
-                )}
 
                 <div className="mt-5 rounded-2xl bg-blue-50 dark:bg-blue-500/10 p-4 flex gap-3">
                   <Lightbulb size={20} className="shrink-0 text-blue-600 dark:text-blue-400" />
