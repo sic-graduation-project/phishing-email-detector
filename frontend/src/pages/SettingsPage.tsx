@@ -42,8 +42,8 @@ export default function SettingsPage() {
             }`}
           >
             <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                theme === "dark" ? "translate-x-5" : "translate-x-0.5"
+              className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                theme === "dark" ? "translate-x-5" : "translate-x-0"
               }`}
             />
           </button>
@@ -62,7 +62,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <button className="relative h-6 w-11 rounded-full bg-blue-600">
-            <span className="absolute top-0.5 translate-x-5 h-5 w-5 rounded-full bg-white" />
+            <span className="absolute left-0.5 top-0.5 translate-x-5 h-5 w-5 rounded-full bg-white" />
           </button>
         </div>
 
