@@ -34,7 +34,7 @@ Each component is developed independently before being integrated into the final
 |---|---|---|
 | Eng. Heba | Dataset & Data Preprocessing | `feature/data-preprocessing` |
 | Eng. Buthaina | NLP & Text Features | `feature/nlp` |
-| Eng. Sulaiman | Machine Learning | `feature/ml` |
+| Eng. Suliman | Machine Learning | `feature/ml` |
 | Eng. Rayan | URL & Email Header Analysis | `feature/url-analysis` |
 | Eng. Anas | Backend & API | `feature/backend` |
 | Eng. Amal | Frontend & Dashboard | `feature/frontend` |
