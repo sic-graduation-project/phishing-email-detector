@@ -22,8 +22,6 @@ df = pd.read_csv(csv_path)
 
 
 data = df[["body","subject","label"]].copy()  # Create a copy of the DataFrame with only the "body" and "label" and "subject" columns
-data["body"] = data["body"].fillna("")
-data["subject"] = data["subject"].fillna("")  # subject has missing values in the raw csv
 
 def extract_phishing_features(text):
     # Extracts features from the email body text that may indicate phishing attempts.
