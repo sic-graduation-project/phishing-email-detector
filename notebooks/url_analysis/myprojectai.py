@@ -519,26 +519,22 @@ def SenderHasDisplayName(sender):
 
 
 def GetBaseDomain(domain):
+if not domain:
+return ""
 
-    if not domain:
-        return ""
+try:
+ipaddress.ip_address(domain)
+return domain.lower()
 
-    try:
+except ValueError:
+pass
 
-        ipaddress.ip_address(domain)
+extracted = tldextract.extract(domain)
 
-        return domain
+if not extracted.domain or not extracted.suffix:
+return domain.lower()
 
-    except ValueError:
-        pass
-
-    parts = domain.lower().split(".")
-
-    if len(parts) >= 2:
-
-        return ".".join(parts[-2:])
-
-    return domain.lower()
+return f"{extracted.domain}.{extracted.suffix}".lower()
 
 
 # ==========================================
