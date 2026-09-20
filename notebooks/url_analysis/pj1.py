@@ -18,7 +18,7 @@ from sklearn.feature_selection import chi2
 csv_path = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "processed", "cleaned_dataset.csv"
 )
-df = pd.read_csv(csv_path)
+df = pd.read_csv(csv_path,keep_default_na=False)
 
 
 data = df[["body","subject","label","email_id"]].copy()  # Create a copy of the DataFrame with only the "body" and "label" and "subject" columns
