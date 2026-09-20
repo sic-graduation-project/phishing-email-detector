@@ -16,12 +16,12 @@ from sklearn.feature_selection import chi2
 
 
 csv_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "..", "src", "nlp", "CEAS_08.csv"
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "notebooks", "data_cleaned.csv"
 )
 df = pd.read_csv(csv_path)
 
 
-data = df[["body","subject","label"]].copy()  # Create a copy of the DataFrame with only the "body" and "label" and "subject" columns
+data = df[["body","subject","label","email_id"]].copy()  # Create a copy of the DataFrame with only the "body" and "label" and "subject" columns
 
 def extract_phishing_features(text):
     # Extracts features from the email body text that may indicate phishing attempts.
@@ -101,20 +101,11 @@ tfidf_analyse = TfidfVectorizer(max_features=5000, ngram_range=(1, 2),stop_words
 X_train_tfidf = tfidf_analyse.fit_transform(train_data["clean_body"]) #apply TF-IDF vectorization to the training data only to avoid data leakage
 #i used the chi2 test to find the most discriminative words between phishing and legitimate emails
 # it is just an additional analysis to understand the data better, it is not used in the final model
-tfidf_chi = TfidfVectorizer(
-    max_features=5000,
-    ngram_range=(1, 2),
-    stop_words="english",
-    min_df=3,
-    max_df=0.9,
-    sublinear_tf=True
-)
-X_train_chi = tfidf_chi.fit_transform(train_data["clean_body"])
 y_train_chi = train_data["label"].values
 
-chi2_scores, p_values = chi2(X_train_chi, y_train_chi)
+chi2_scores, p_values = chi2(X_train_tfidf, y_train_chi)
 
-feature_names = np.array(tfidf_chi.get_feature_names_out())
+feature_names = np.array(tfidf_analyse.get_feature_names_out())
 top_indices = chi2_scores.argsort()[::-1][:30]
 print("Top discriminative words:")
 print(feature_names[top_indices])
@@ -124,14 +115,13 @@ print(feature_names[top_indices])
 #a single-label subset - mean TF-IDF per word is used instead to rank words within each class
 for label_value, label_name in [(1, "Phishing"), (0, "Legitimate")]:
     mask = train_data["label"] == label_value
-    X_subset = tfidf_chi.transform(train_data.loc[mask, "clean_body"])
+    X_subset = tfidf_analyse.transform(train_data.loc[mask, "clean_body"])
     mean_scores = np.asarray(X_subset.mean(axis=0)).ravel()
     top_idx = mean_scores.argsort()[::-1][:20]
     print(f"\nTop words for {label_name}:")
     print(feature_names[top_idx])
 
-# Get the feature names and their corresponding mean TF-IDF scores
-feature_names = np.array(tfidf_analyse.get_feature_names_out())
+# Get the mean TF-IDF score per feature
 mean_tfidf = np.asarray(X_train_tfidf.mean(axis=0)).ravel()
 top_indices = mean_tfidf.argsort()[::-1][:30]
 print(feature_names[top_indices])
