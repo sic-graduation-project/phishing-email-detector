@@ -16,7 +16,7 @@ from sklearn.feature_selection import chi2
 
 
 csv_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "..", "..", "notebooks", "data_cleaned.csv"
+    os.path.dirname(os.path.abspath(__file__)), "..", "..", "data", "processed", "cleaned_dataset.csv"
 )
 df = pd.read_csv(csv_path)
 
