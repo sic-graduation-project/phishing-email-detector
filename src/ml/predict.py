@@ -264,6 +264,43 @@ def predict_email(
         "phishing_probability": probability,
     }
 
+def predict_from_analysis(
+    sender: str,
+    subject: str,
+    body: str,
+    url_analysis_result: dict[str, Any],
+) -> dict[str, Any]:
+
+    if "features" not in url_analysis_result:
+        raise ValueError(
+            "url_analysis_result must contain 'features'."
+        )
+
+    ml_result = predict_email(
+        sender=sender,
+        subject=subject,
+        body=body,
+        url_sender_features=url_analysis_result["features"],
+    )
+
+    return {
+        **ml_result,
+        "risk_indicators": url_analysis_result.get(
+            "risk_indicators", []
+        ),
+        "indicator_count": url_analysis_result.get(
+            "indicator_count", 0
+        ),
+        "sender_domain": url_analysis_result.get(
+            "sender_domain", ""
+        ),
+        "extracted_urls": url_analysis_result.get(
+            "extracted_urls", []
+        ),
+        "domain_mismatch": url_analysis_result.get(
+            "domain_mismatch", 0
+        ),
+    }
 
 # ============================================================
 # Local test
