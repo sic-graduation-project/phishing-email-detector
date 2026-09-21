@@ -13,7 +13,8 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000
 
 const http = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,//وقت انتظار الرد 15 ثانية
+  // Render's free service can take about a minute to wake after inactivity.
+  timeout: 90000,
 });
 //الملف هذا حلقت وصل بين الفرونت و الباك
 // Shape of the /api/v1/analyze/{email,url,text} response, per the backend's
