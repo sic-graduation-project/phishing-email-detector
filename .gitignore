@@ -216,13 +216,3 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
-<<<<<<< HEAD
-=======
-
-
-# ===== Generated artifacts (NOT tracked) =====
-notebooks/url_analysis/artifacts/*.npz
-notebooks/url_analysis/artifacts/*.npy
-notebooks/url_analysis/artifacts/*.pkl
-notebooks/url_analysis/artifacts/*.csv
->>>>>>> feature/nlp
