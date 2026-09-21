@@ -217,9 +217,9 @@ All settings live in one file, `config.js`:
 ```js
 export const NEXUS_CONFIG = Object.freeze({
   DEMO_MODE: false,                        // true = fake demo results, no network; false = real backend
-  API_BASE_URL: "http://localhost:8000",   // Nexus backend
-  NEXUS_APP_URL: "http://localhost:5173",  // main Nexus web app ("View Full Analysis")
-  REQUEST_TIMEOUT_MS: 15000,
+  API_BASE_URL: "https://nexus-phishing-api.onrender.com",
+  NEXUS_APP_URL: "https://nexus-phishing-detector.onrender.com",
+  REQUEST_TIMEOUT_MS: 90000,               // allows a free Render instance time to wake up
   MAX_TEXT_LENGTH: 5000,                   // longest text selection that can be scanned
   MAX_DEEP_LINK_LENGTH: 8000,              // longest web address "View Full Analysis" may open
 });

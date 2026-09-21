@@ -9,7 +9,8 @@
 //                  If you change it, ALSO change "host_permissions" in
 //                  manifest.json to the same origin, or Chrome blocks the calls.
 // NEXUS_APP_URL    The main Nexus web application, opened by "View Full Analysis".
-//                  (http://localhost:5173 is where `npm run dev` serves it.)
+//                  Use the deployed site here so the packaged extension opens
+//                  the same public application used by the browser client.
 // MAX_TEXT_LENGTH  Longest text selection that can be scanned. Same limit as the
 //                  Nexus web app's text box.
 // MAX_DEEP_LINK_LENGTH  Longest web address "View Full Analysis" may open (the
@@ -22,9 +23,9 @@
 // be read by the user.
 export const NEXUS_CONFIG = Object.freeze({
   DEMO_MODE: false,
-  API_BASE_URL: "http://localhost:8000",
-  NEXUS_APP_URL: "http://localhost:5173",
-  REQUEST_TIMEOUT_MS: 15000,
+  API_BASE_URL: "https://nexus-phishing-api.onrender.com",
+  NEXUS_APP_URL: "https://nexus-phishing-detector.onrender.com",
+  REQUEST_TIMEOUT_MS: 90000,
   MAX_TEXT_LENGTH: 5000,
   MAX_DEEP_LINK_LENGTH: 8000,
 });

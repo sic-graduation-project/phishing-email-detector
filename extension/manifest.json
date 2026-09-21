@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Nexus",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Right-click selected text or a link to scan it with the Nexus phishing detection service.",
   "action": {
     "default_title": "Nexus",
@@ -23,5 +23,5 @@
     "type": "module"
   },
   "permissions": ["contextMenus"],
-  "host_permissions": ["http://localhost:8000/*"]
+  "host_permissions": ["https://nexus-phishing-api.onrender.com/*"]
 }
