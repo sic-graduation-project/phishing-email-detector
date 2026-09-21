@@ -26,12 +26,12 @@ ERROR_RESPONSES = {
     status_code=status.HTTP_200_OK,
     tags=["Email Analysis"],
     summary="Analyze an email",
-    description="Analyzes an email subject and body using temporary mock logic.",
+    description="Analyzes an email using URL/sender features, NLP, and the trained ML model.",
     responses=ERROR_RESPONSES,
 )
 # يستقبل البريد الإلكتروني ويمرره إلى طبقة الخدمات.
 def analyze_email_endpoint(payload: EmailAnalysisRequest) -> AnalysisResponse:
-    return analyze_email(subject=payload.subject, body=payload.body)
+    return analyze_email(sender=payload.sender, subject=payload.subject, body=payload.body)
 
 
 @router.post(
@@ -40,7 +40,7 @@ def analyze_email_endpoint(payload: EmailAnalysisRequest) -> AnalysisResponse:
     status_code=status.HTTP_200_OK,
     tags=["URL Analysis"],
     summary="Analyze a URL",
-    description="Analyzes a single URL using temporary mock logic.",
+    description="Analyzes a single URL using explainable URL-specific risk indicators.",
     responses=ERROR_RESPONSES,
 )
 # يستقبل الرابط ويمرره إلى طبقة الخدمات.
@@ -54,7 +54,7 @@ def analyze_url_endpoint(payload: URLAnalysisRequest) -> AnalysisResponse:
     status_code=status.HTTP_200_OK,
     tags=["Text Analysis"],
     summary="Analyze plain text",
-    description="Analyzes plain text using temporary mock logic.",
+    description="Analyzes plain text using NLP and the trained ML model.",
     responses=ERROR_RESPONSES,
 )
 # يستقبل النص ويمرره إلى طبقة الخدمات.

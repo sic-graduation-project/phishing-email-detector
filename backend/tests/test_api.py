@@ -19,7 +19,11 @@ def test_health_check() -> None:
 def test_analyze_email() -> None:
     response = client.post(
         "/api/v1/analyze/email",
-        json={"subject": "Verify now", "body": "Click this link to verify your account."},
+        json={
+            "sender": "Support <support@example.com>",
+            "subject": "Verify now",
+            "body": "Click this link to verify your account.",
+        },
     )
 
     data = response.json()
@@ -27,16 +31,46 @@ def test_analyze_email() -> None:
     assert data["input_type"] == "email"
     assert 0 <= data["risk_score"] <= 100
     assert data["reasons"]
+    assert not any("Mock" in reason for reason in data["reasons"])
 
 
 # يختبر تحليل الرابط.
 def test_analyze_url() -> None:
-    response = client.post("/api/v1/analyze/url", json={"url": "https://example.com/login"})
+    response = client.post("/api/v1/analyze/url", json={"url": "https://devanas.ly"})
 
     data = response.json()
     assert response.status_code == 200
     assert data["input_type"] == "url"
-    assert 0 <= data["risk_score"] <= 100
+    assert data["classification"] == "Legitimate"
+    assert data["risk_score"] == 0
+    assert data["reasons"] == ["No suspicious URL indicators were detected"]
+
+
+def test_analyze_suspicious_url() -> None:
+    response = client.post(
+        "/api/v1/analyze/url",
+        json={"url": "http://192.168.1.10/login?verify=1"},
+    )
+
+    data = response.json()
+    assert response.status_code == 200
+    assert data["classification"] == "Phishing"
+    assert data["risk_score"] >= 50
+    assert "URL contains an IP address" in data["reasons"]
+    assert "URL uses HTTP instead of HTTPS" in data["reasons"]
+
+
+def test_analyze_shortened_suspicious_url() -> None:
+    response = client.post(
+        "/api/v1/analyze/url",
+        json={"url": "https://bit.ly/verify-account"},
+    )
+
+    data = response.json()
+    assert response.status_code == 200
+    assert data["classification"] == "Phishing"
+    assert data["risk_score"] == 50
+    assert "URL uses a shortened URL service" in data["reasons"]
 
 
 # يختبر تحليل النص.

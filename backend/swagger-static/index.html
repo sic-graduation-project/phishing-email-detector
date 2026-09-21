@@ -34,7 +34,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Phishing Email Detector API",
-    "description": "\nBackend API for the Nexus team graduation project.\n\nThe current analysis logic is a clear mock placeholder until the final NLP,\nURL/Sender Analysis, and Machine Learning components are connected.\n",
+    "description": "\nBackend API for the Nexus team graduation project.\n\nThe API combines NLP, URL/sender analysis, and the trained machine-learning\nmodel to classify email, URL, and text input.\n",
     "version": "1.0.0"
   },
   "paths": {
@@ -66,7 +66,7 @@
           "Email Analysis"
         ],
         "summary": "Analyze an email",
-        "description": "Analyzes an email subject and body using temporary mock logic.",
+        "description": "Analyzes an email using URL/sender features, NLP, and the trained ML model.",
         "operationId": "analyze_email_endpoint_api_v1_analyze_email_post",
         "requestBody": {
           "content": {
@@ -118,7 +118,7 @@
           "URL Analysis"
         ],
         "summary": "Analyze a URL",
-        "description": "Analyzes a single URL using temporary mock logic.",
+        "description": "Analyzes a single URL using explainable URL-specific risk indicators.",
         "operationId": "analyze_url_endpoint_api_v1_analyze_url_post",
         "requestBody": {
           "content": {
@@ -170,7 +170,7 @@
           "Text Analysis"
         ],
         "summary": "Analyze plain text",
-        "description": "Analyzes plain text using temporary mock logic.",
+        "description": "Analyzes plain text using NLP and the trained ML model.",
         "operationId": "analyze_text_endpoint_api_v1_analyze_text_post",
         "requestBody": {
           "content": {
@@ -245,12 +245,12 @@
             ]
           },
           "risk_score": {
-            "type": "integer",
+            "type": "number",
             "maximum": 100.0,
             "minimum": 0.0,
             "title": "Risk Score",
             "examples": [
-              85
+              85.0
             ]
           },
           "reasons": {
@@ -261,7 +261,7 @@
             "title": "Reasons",
             "examples": [
               [
-                "Mock indicator: suspicious language placeholder"
+                "URL contains suspicious words"
               ]
             ]
           }
@@ -277,10 +277,27 @@
       },
       "EmailAnalysisRequest": {
         "properties": {
+          "sender": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 320
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sender",
+            "description": "Optional sender address or display-name/address pair.",
+            "examples": [
+              "Nexus Support <support@example.com>"
+            ]
+          },
           "subject": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 200
               },
               {
                 "type": "null"
@@ -294,6 +311,7 @@
           },
           "body": {
             "type": "string",
+            "maxLength": 5000,
             "minLength": 1,
             "title": "Body",
             "description": "Email body text. It cannot be empty.",
@@ -360,6 +378,7 @@
         "properties": {
           "text": {
             "type": "string",
+            "maxLength": 5000,
             "minLength": 1,
             "title": "Text",
             "description": "Plain text to analyze. It cannot be empty.",

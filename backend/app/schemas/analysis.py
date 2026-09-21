@@ -33,14 +33,22 @@ class HealthResponse(BaseModel):
 
 
 class EmailAnalysisRequest(BaseModel):
+    sender: str | None = Field(
+        default=None,
+        max_length=320,
+        examples=["Nexus Support <support@example.com>"],
+        description="Optional sender address or display-name/address pair.",
+    )
     subject: str | None = Field(
         default=None,
+        max_length=200,
         examples=["Account verification required"],
         description="Optional email subject.",
     )
     body: str = Field(
         ...,
         min_length=1,
+        max_length=5000,
         examples=["Please verify your account by clicking the link."],
         description="Email body text. It cannot be empty.",
     )
@@ -55,9 +63,9 @@ class EmailAnalysisRequest(BaseModel):
         return value
 
     # ينظف عنوان البريد الاختياري من المسافات الزائدة.
-    @field_validator("subject")
+    @field_validator("sender", "subject")
     @classmethod
-    def clean_subject(cls, value: str | None) -> str | None:
+    def clean_optional_text(cls, value: str | None) -> str | None:
         if value is None:
             return None
         value = value.strip()
@@ -76,6 +84,7 @@ class TextAnalysisRequest(BaseModel):
     text: str = Field(
         ...,
         min_length=1,
+        max_length=5000,
         examples=["Your account will be locked unless you verify it now."],
         description="Plain text to analyze. It cannot be empty.",
     )
@@ -93,8 +102,8 @@ class TextAnalysisRequest(BaseModel):
 class AnalysisResponse(BaseModel):
     input_type: Literal["email", "url", "text"] = Field(..., examples=["email"])
     classification: Literal["Phishing", "Legitimate"] = Field(..., examples=["Phishing"])
-    risk_score: int = Field(..., ge=0, le=100, examples=[85])
+    risk_score: float = Field(..., ge=0, le=100, examples=[85.0])
     reasons: list[str] = Field(
         ...,
-        examples=[["Mock indicator: suspicious language placeholder"]],
+        examples=[["URL contains suspicious words"]],
     )

@@ -9,7 +9,10 @@ load_dotenv()
 
 # تقرأ قائمة روابط Frontend المسموح بها أثناء التطوير.
 def get_cors_origins() -> list[str]:
-    origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000")
+    origins = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    )
     return [origin.strip() for origin in origins.split(",") if origin.strip()]
 
 
@@ -18,6 +21,6 @@ APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
 APP_DESCRIPTION = """
 Backend API for the Nexus team graduation project.
 
-The current analysis logic is a clear mock placeholder until the final NLP,
-URL/Sender Analysis, and Machine Learning components are connected.
+The API combines NLP, URL/sender analysis, and the trained machine-learning
+model to classify email, URL, and text input.
 """

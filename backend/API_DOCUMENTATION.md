@@ -2,7 +2,8 @@
 
 Backend API for the Nexus team graduation project.
 
-Current analysis responses use clear mock placeholder logic only. They are not Machine Learning predictions yet.
+Analysis responses come from the integrated URL/sender analyzer, NLP pipeline,
+and calibrated Linear SVC model.
 
 ## Local API Links
 
@@ -56,12 +57,13 @@ Status codes: `200`, `500`
 
 ### POST `/api/v1/analyze/email`
 
-Purpose: Analyze an email using its subject and body.
+Purpose: Analyze an email using its optional sender and subject plus its body.
 
 Request:
 
 ```json
 {
+  "sender": "Support <support@example.com>",
   "subject": "string",
   "body": "string"
 }
@@ -73,10 +75,10 @@ Response:
 {
   "input_type": "email",
   "classification": "Phishing",
-  "risk_score": 85,
+  "risk_score": 65.95,
   "reasons": [
-    "Mock indicator: final ML model is not connected yet",
-    "Mock indicator: temporary backend response for API integration"
+    "URL contains suspicious words",
+    "URL uses HTTP instead of HTTPS"
   ]
 }
 ```
@@ -110,10 +112,10 @@ Response:
 {
   "input_type": "url",
   "classification": "Phishing",
-  "risk_score": 75,
+  "risk_score": 75.0,
   "reasons": [
-    "Mock indicator: final ML model is not connected yet",
-    "Mock indicator: temporary backend response for API integration"
+    "URL contains an IP address",
+    "URL uses HTTP instead of HTTPS"
   ]
 }
 ```
@@ -146,11 +148,10 @@ Response:
 ```json
 {
   "input_type": "text",
-  "classification": "Phishing",
-  "risk_score": 65,
+  "classification": "Legitimate",
+  "risk_score": 4.97,
   "reasons": [
-    "Mock indicator: final ML model is not connected yet",
-    "Mock indicator: temporary backend response for API integration"
+    "No strong phishing indicators were detected"
   ]
 }
 ```
