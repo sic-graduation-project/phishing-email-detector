@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --animate-fade-up: fade-up 0.5s ease-out both;
+  --animate-scale-in: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Snappy default so buttons, inputs, icons, and other small interactive
+     elements never feel sluggish when the theme changes. */
+  *,
+  *::before,
+  *::after {
+    transition-property: background-color, border-color, color, box-shadow, fill, stroke;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
+
+  /* Slower, gentler transition on the main page surfaces (the overall
+     canvas plus the header/sidebar/content/footer chrome) so a dark <-> light
+     switch reads as a gradual dim/brighten rather than an instant flash. */
+  html,
+  body,
+  #root,
+  #root > div,
+  header,
+  aside,
+  main,
+  footer {
+    transition-property: background-color, border-color, color, box-shadow;
+    transition-duration: 400ms;
+    transition-timing-function: ease;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #f4f7fc;
+  color: #0f172a;
+}
+
+.dark body {
+  background: #0b0f1a;
+  color: #e2e8f0;
+}
+
+::selection {
+  background: #93c5fd;
+  color: #0f172a;
+}
+
+* {
+  box-sizing: border-box;
+}
