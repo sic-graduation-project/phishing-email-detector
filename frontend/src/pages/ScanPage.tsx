@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Mail,
   Link2,
@@ -16,7 +16,7 @@ import {
   ArrowRight,
   Loader2,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { scanEmail, inputKindLabel } from "../api/client";
 import { saveScanToHistory } from "../api/history";
 import type { InputKind, ScanResult } from "../types";
@@ -63,17 +63,15 @@ export default function ScanPage() {
     setError(null);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!canSubmit) return;
+  async function runAnalysis(kind: InputKind, value: string, subjectValue?: string) {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
       const scan = await scanEmail({
-        kind: inputKind,
-        subject: inputKind === "email" ? subject : undefined,
-        body: content,
+        kind,
+        subject: kind === "email" ? subjectValue : undefined,
+        body: value,
       });
       saveScanToHistory(scan);
       setResult(scan);
@@ -83,6 +81,42 @@ export default function ScanPage() {
       setLoading(false);
     }
   }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!canSubmit) return;
+    await runAnalysis(inputKind, content, subject);
+  }
+
+  // Deep link from the Nexus Chrome extension ("View Full Analysis"):
+  //   /?url=<scanned URL>   or   /?text=<scanned text>
+  // Fills the matching input and runs the same analysis as the Analyze button.
+  // The ref keeps React StrictMode's double effect run from analyzing twice.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const handledQuery = useRef<string | null>(null);
+
+  useEffect(() => {
+    const query = searchParams.toString();
+    if (!query || handledQuery.current === query) return;
+
+    const urlParam = searchParams.get("url");
+    const textParam = searchParams.get("text");
+    const kind: InputKind | null = urlParam?.trim() ? "url" : textParam?.trim() ? "text" : null;
+    if (!kind) return;
+    const value = (kind === "url" ? urlParam : textParam) as string;
+
+    handledQuery.current = query;
+    setInputKind(kind);
+    if (kind === "url") setUrl(value);
+    else setText(value);
+    void runAnalysis(kind, value);
+
+    // Drop the consumed parameters so a reload does not analyze (and log) it again.
+    const remaining = new URLSearchParams(searchParams);
+    remaining.delete("url");
+    remaining.delete("text");
+    setSearchParams(remaining, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const riskScore = result ? result.riskScore : 0;
   const riskColor = riskScore >= 70 ? "#ef4444" : riskScore >= 40 ? "#f59e0b" : "#10b981";
