@@ -5,7 +5,7 @@ import numpy as np
 
 from scipy.sparse import csr_matrix, hstack
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit
 from sklearn.preprocessing import MaxAbsScaler
 
 from feature_builder import (
@@ -104,11 +104,60 @@ def prepare_features():
     # Stratified to preserve label distribution
     # --------------------------------------------------------
 
-    train_df, test_df = train_test_split(
-        df,
-        test_size=TEST_SIZE,
-        random_state=RANDOM_STATE,
-        stratify=df["label"],
+    # ==========================================================
+    # Sender-based Group Split
+    # Same sender cannot appear in both Train and Test
+    # ==========================================================
+    groups = (
+        df["sender"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+    )
+
+    # If sender is empty, treat that email as its own group
+    empty_sender = groups.eq("")
+
+    groups.loc[empty_sender] = (
+        "missing_sender_" + df.loc[empty_sender, "email_id"].astype(str)
+    )
+
+    splitter = GroupShuffleSplit(
+        n_splits=1,
+        test_size=0.30,
+        random_state=42,
+    )
+
+    train_idx, test_idx = next(
+        splitter.split(
+            df,
+            y=df["label"],
+            groups=groups,
+        )
+    )
+
+    train_df = df.iloc[train_idx].copy()
+    test_df = df.iloc[test_idx].copy()
+
+    print("\nSender-based split completed.")
+    print("Train rows:", len(train_df))
+    print("Test rows:", len(test_df))
+
+    print("\nTrain label distribution:")
+    print(train_df["label"].value_counts(normalize=True))
+
+    print("\nTest label distribution:")
+    print(test_df["label"].value_counts(normalize=True))
+
+    train_senders = set(groups.iloc[train_idx])
+    test_senders = set(groups.iloc[test_idx])
+
+    sender_overlap = train_senders.intersection(test_senders)
+
+    print("\nSender overlap between Train/Test:", len(sender_overlap))
+
+    assert len(sender_overlap) == 0, (
+        "ERROR: Sender leakage detected between Train and Test."
     )
 
     print(f"Training rows: {len(train_df):,}")
