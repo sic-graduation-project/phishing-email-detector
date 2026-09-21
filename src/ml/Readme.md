@@ -215,7 +215,6 @@ models/
 Files:
 
 models/calibrated_linear_svc.pkl
-models/logistic_regression.pkl
 models/tfidf_vectorizer.pkl
 models/numeric_scaler.pkl
 models/numeric_feature_names.pkl
