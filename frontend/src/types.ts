@@ -3,6 +3,7 @@ export type InputKind = "email" | "url" | "text";
 
 export interface ScanRequest {
   kind: InputKind;
+  sender?: string;
   subject?: string;
   body: string;
 }

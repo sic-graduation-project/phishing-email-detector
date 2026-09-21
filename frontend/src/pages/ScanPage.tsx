@@ -28,7 +28,7 @@ const INPUT_TYPES: { kind: InputKind; label: string; icon: typeof Mail }[] = [
   { kind: "text", label: "Text", icon: FileText },
 ];
 
-const LIMITS = { subject: 200, body: 5000, url: 500 };
+const LIMITS = { sender: 320, subject: 200, body: 5000, url: 500 };
 
 const SECURITY_TIPS: Record<InputKind, string> = {
   email:
@@ -46,6 +46,7 @@ function relativeTime(iso: string) {
 
 export default function ScanPage() {
   const [inputKind, setInputKind] = useState<InputKind>("email");
+  const [sender, setSender] = useState("");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [url, setUrl] = useState("");
@@ -63,13 +64,19 @@ export default function ScanPage() {
     setError(null);
   }
 
-  async function runAnalysis(kind: InputKind, value: string, subjectValue?: string) {
+  async function runAnalysis(
+    kind: InputKind,
+    value: string,
+    subjectValue?: string,
+    senderValue?: string,
+  ) {
     setLoading(true);
     setError(null);
     setResult(null);
     try {
       const scan = await scanEmail({
         kind,
+        sender: kind === "email" ? senderValue : undefined,
         subject: kind === "email" ? subjectValue : undefined,
         body: value,
       });
@@ -85,7 +92,7 @@ export default function ScanPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
-    await runAnalysis(inputKind, content, subject);
+    await runAnalysis(inputKind, content, subject, sender);
   }
 
   // Deep link from the Nexus Chrome extension ("View Full Analysis"):
@@ -106,6 +113,9 @@ export default function ScanPage() {
     const value = (kind === "url" ? urlParam : textParam) as string;
 
     handledQuery.current = query;
+    // This effect consumes a deep link from the browser extension and must
+    // synchronize the form state with that external URL state.
+    // oxlint-disable-next-line react/set-state-in-effect
     setInputKind(kind);
     if (kind === "url") setUrl(value);
     else setText(value);
@@ -174,8 +184,25 @@ export default function ScanPage() {
                 <div>
                   <h3 className="font-semibold text-slate-800 dark:text-slate-100">Email Details</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Enter the email subject and body to analyze.
+                    Enter the sender, subject, and body to analyze.
                   </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1.5">
+                    Sender (optional)
+                  </label>
+                  <div className="relative">
+                    <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={sender}
+                      maxLength={LIMITS.sender}
+                      onChange={(e) => setSender(e.target.value)}
+                      placeholder="e.g. Support <support@example.com>"
+                      className="w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 pl-10 pr-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -314,7 +341,7 @@ export default function ScanPage() {
                   <Mail size={15} /> Email
                 </p>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  Subject + body of the email
+                  Sender + subject + body of the email
                 </p>
               </div>
               <div>

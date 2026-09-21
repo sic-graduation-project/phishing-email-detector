@@ -38,7 +38,11 @@ const ANALYZE_ENDPOINTS: Record<InputKind, string> = {
 function buildPayload(request: ScanRequest): Record<string, unknown> {
   switch (request.kind) {
     case "email":
-      return { subject: request.subject?.trim() || undefined, body: request.body };
+      return {
+        sender: request.sender?.trim() || undefined,
+        subject: request.subject?.trim() || undefined,
+        body: request.body,
+      };
     case "url":
       return { url: request.body };
     case "text":
