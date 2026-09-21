@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="is-popup">
+    <header class="header">
+      <img class="logo" src="assets/nexus-logo.png" width="40" height="40" alt="Nexus logo" />
+      <div>
+        <h1 class="brand">NEXUS</h1>
+        <p class="tagline">Phishing Protection</p>
+      </div>
+      <span class="demo-badge" id="demo-badge" hidden>DEMO MODE</span>
+    </header>
+
+    <main class="content">
+      <section class="card">
+        <h2 class="section-title">How to scan</h2>
+        <ol class="steps">
+          <li>
+            <strong>Text:</strong> select text on a web page, right-click, then choose
+            <em>Scan Text with Nexus</em>.
+          </li>
+          <li>
+            <strong>Link:</strong> right-click a link, then choose <em>Scan URL with Nexus</em>.
+          </li>
+        </ol>
+      </section>
+
+      <p class="status" id="status" role="status">
+        <span class="dot" aria-hidden="true"></span>
+        <span id="status-text">Checking the Nexus backend...</span>
+      </p>
+      <p class="muted" id="status-hint" hidden></p>
+
+      <button class="btn" id="open-nexus" type="button">Open Nexus</button>
+    </main>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

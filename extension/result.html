@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nexus - Analysis Result</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <img class="logo" src="assets/nexus-logo.png" width="40" height="40" alt="Nexus logo" />
+      <div>
+        <h1 class="brand">NEXUS</h1>
+        <p class="tagline" id="tagline">Analysis Result</p>
+      </div>
+      <span class="demo-badge" id="demo-badge" hidden>DEMO MODE</span>
+    </header>
+
+    <main class="content">
+      <!-- What was scanned -->
+      <section class="card" id="scanned" hidden>
+        <p class="label" id="scanned-label"></p>
+        <p class="preview" id="scanned-preview"></p>
+      </section>
+
+      <!-- Loading -->
+      <section class="loading" id="loading" role="status" hidden>
+        <span class="spinner" aria-hidden="true"></span>
+        <span>Nexus is analyzing...</span>
+      </section>
+
+      <!-- Result (only after a successful scan) -->
+      <section class="result" id="result" hidden aria-live="polite">
+        <p class="demo-note" id="demo-note" hidden>
+          Demo result for UI testing only. It is simulated and is not a real security analysis.
+        </p>
+        <div class="verdict" id="verdict"></div>
+
+        <div class="score">
+          <div class="score-head">
+            <span class="label">Risk Score</span>
+            <span class="score-value" id="score-value"></span>
+          </div>
+          <div class="meter" id="meter" role="meter" aria-label="Risk score" aria-valuemin="0" aria-valuemax="100">
+            <div class="meter-fill" id="meter-fill"></div>
+          </div>
+        </div>
+
+        <div class="reasons">
+          <p class="label">Reasons</p>
+          <ul class="reasons-list" id="reasons-list"></ul>
+          <p class="muted" id="reasons-empty" hidden>The analysis service did not return any reasons.</p>
+        </div>
+
+        <div class="more">
+          <p class="more-text">For more details, visit Nexus.</p>
+          <p class="more-text" id="more-note" hidden>
+            This input is too long to send to the web app automatically, so it will open empty. Paste it there to analyze it.
+          </p>
+          <button class="btn" id="view-btn" type="button">View Full Analysis</button>
+        </div>
+      </section>
+
+      <!-- Error message -->
+      <p class="message" id="message" role="alert" hidden></p>
+      <button class="btn" id="retry-btn" type="button" hidden>Try Again</button>
+    </main>
+
+    <script type="module" src="result.js"></script>
+  </body>
+</html>

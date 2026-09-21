@@ -1,0 +1,425 @@
+/* Shared styles for the Nexus toolbar popup and the scan result window.
+   Colors follow the Nexus web app (blue/violet accent, red for phishing,
+   green for legitimate) with automatic light/dark support. */
+
+:root {
+  --bg: #f4f7fc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --track: #e2e8f0;
+  --primary: #2563eb;
+  --primary-2: #7c3aed;
+  --safe: #059669;
+  --safe-bg: #ecfdf5;
+  --safe-border: #a7f3d0;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --neutral: #2563eb;
+  --neutral-bg: #eff6ff;
+  --neutral-border: #bfdbfe;
+  --demo: #b45309;
+  --demo-bg: #fffbeb;
+  --demo-border: #fde68a;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0f1a;
+    --surface: #0f1420;
+    --border: rgba(255, 255, 255, 0.1);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --track: rgba(255, 255, 255, 0.12);
+    --safe: #34d399;
+    --safe-bg: rgba(16, 185, 129, 0.1);
+    --safe-border: rgba(16, 185, 129, 0.3);
+    --danger: #f87171;
+    --danger-bg: rgba(239, 68, 68, 0.1);
+    --danger-border: rgba(239, 68, 68, 0.3);
+    --neutral: #60a5fa;
+    --neutral-bg: rgba(59, 130, 246, 0.1);
+    --neutral-border: rgba(59, 130, 246, 0.3);
+    --demo: #fbbf24;
+    --demo-bg: rgba(245, 158, 11, 0.12);
+    --demo-border: rgba(245, 158, 11, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The toolbar popup has a fixed width; the result window fills its window. */
+body.is-popup {
+  width: 340px;
+}
+
+p,
+h1,
+h2,
+ul,
+ol {
+  margin: 0;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.brand {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+}
+
+.tagline {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* DEMO MODE indicators */
+.demo-badge {
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid var(--demo-border);
+  border-radius: 999px;
+  background: var(--demo-bg);
+  color: var(--demo);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.demo-note {
+  padding: 8px 10px;
+  border: 1px dashed var(--demo-border);
+  border-radius: 10px;
+  background: var(--demo-bg);
+  color: var(--demo);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Layout */
+.content {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.muted {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.card {
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Toolbar popup */
+.steps {
+  margin-top: 8px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.steps li {
+  margin: 6px 0;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.status.is-online {
+  color: var(--safe);
+}
+
+.status.is-online .dot {
+  background: var(--safe);
+}
+
+.status.is-demo {
+  color: var(--demo);
+  font-weight: 700;
+}
+
+.status.is-demo .dot {
+  background: var(--demo);
+}
+
+.status.is-offline {
+  color: var(--danger);
+}
+
+.status.is-offline .dot {
+  background: var(--danger);
+}
+
+/* What was scanned */
+.preview {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+
+.preview.is-link {
+  color: var(--muted);
+  font-size: 12px;
+  -webkit-line-clamp: 3;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: 2px solid var(--track);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* Result */
+.result {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.result.is-safe {
+  border-color: var(--safe-border);
+}
+
+.result.is-phishing {
+  border-color: var(--danger-border);
+}
+
+.result.is-neutral {
+  border-color: var(--neutral-border);
+}
+
+.verdict {
+  justify-self: start;
+  max-width: 100%;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.is-safe .verdict {
+  color: var(--safe);
+  background: var(--safe-bg);
+}
+
+.is-phishing .verdict {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.is-neutral .verdict {
+  color: var(--neutral);
+  background: var(--neutral-bg);
+}
+
+.score-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.score-value {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.meter {
+  height: 8px;
+  margin-top: 6px;
+  overflow: hidden;
+  background: var(--track);
+  border-radius: 999px;
+}
+
+.meter-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.is-safe .meter-fill {
+  background: var(--safe);
+}
+
+.is-phishing .meter-fill {
+  background: var(--danger);
+}
+
+.is-neutral .meter-fill {
+  background: var(--neutral);
+}
+
+.reasons-list {
+  max-height: 140px;
+  margin-top: 6px;
+  padding-left: 18px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.reasons-list li {
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+
+/* "For more details, visit Nexus." */
+.more {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.more-text {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Error / info message */
+.message {
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.message.is-error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+}
+
+.message.is-info {
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--primary), var(--primary-2));
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn:hover {
+  filter: brightness(1.08);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter-fill {
+    transition: none;
+  }
+}
