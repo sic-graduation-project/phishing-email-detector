@@ -10,11 +10,11 @@ sys.path.insert(
 
 sys.path.insert(
     0,
-    str(PROJECT_ROOT / "notebooks" / "url_analysis")
+    str(PROJECT_ROOT / "src" / "url_analysis")
 )
 
 from predict import predict_from_analysis
-from myprojectai import analyze_single_email
+from analyzer import analyze_single_email
 
 
 sender = "support@example.com"
