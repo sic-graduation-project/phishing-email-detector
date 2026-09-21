@@ -21,7 +21,7 @@
 // Never put API keys or secrets in this file: anything inside an extension can
 // be read by the user.
 export const NEXUS_CONFIG = Object.freeze({
-  DEMO_MODE: true,
+  DEMO_MODE: false,
   API_BASE_URL: "http://localhost:8000",
   NEXUS_APP_URL: "http://localhost:5173",
   REQUEST_TIMEOUT_MS: 15000,

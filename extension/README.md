@@ -1,6 +1,6 @@
 # Nexus Chrome Extension
 
-> **The extension currently ships in DEMO MODE** (`DEMO_MODE: true` in `config.js`). Results are simulated for UI testing and no backend is needed. See [Demo Mode](#demo-mode) to use it, and [Switching to Real API Mode](#switching-to-real-api-mode) to connect it to the Nexus backend.
+> **The extension ships in real API mode** (`DEMO_MODE: false` in `config.js`). Start the Nexus backend before scanning. Demo mode remains available for UI-only testing; see [Demo Mode](#demo-mode).
 
 Nexus Chrome Extension is a lightweight browser client for Nexus, our phishing detection system. It lets you check suspicious content while you browse, straight from Chrome's right-click menu:
 
@@ -70,7 +70,7 @@ For example, scanning `https://example.com/login` opens `http://localhost:5173/?
 * **Very long input opens the web app empty.** Web servers reject very long addresses (the Vite dev server answers HTTP 431 above about 16,000 characters, and many servers stop at 8,000), and non-Latin text is encoded at up to 9 characters per letter (Arabic: about 6). If the address would exceed `MAX_DEEP_LINK_LENGTH` (8,000), the extension opens the plain home page instead and the result window says so; paste the text there to analyze it. Typical English selections and normal URLs fit.
 * The toolbar popup's **Open Nexus** button opens the plain home page with no parameters.
 * **The web app always uses the real backend.** In Demo Mode the extension's own result is a simulated example, but the full analysis in the web app is a real one, so it needs the backend running (and its scores can differ from the demo result).
-* **The backend must allow the web app's address.** The backend only accepts browser requests from the origins in its `CORS_ORIGINS` setting (default: `http://localhost:3000`). Add the web app, for example `CORS_ORIGINS=http://localhost:3000,http://localhost:5173`, or the web app shows "Unable to reach the analysis service."
+* **The backend must allow the web app's address.** The default `CORS_ORIGINS` setting already allows `http://localhost:5173` and `http://127.0.0.1:5173`. Add the deployed web-app origin when hosting it elsewhere.
 
 ## Demo Mode
 
@@ -84,7 +84,7 @@ Demo Mode is a **temporary testing mode** for trying the complete Chrome Extensi
 
 ### Try Demo Mode
 
-1. Open `extension/config.js` and make sure it says `DEMO_MODE: true` (this is the default).
+1. Open `extension/config.js` and temporarily change it to `DEMO_MODE: true`.
 2. Open `chrome://extensions/` in Chrome.
 3. Enable **Developer mode** (top-right).
 4. Click **Load unpacked** and select the `extension` folder (the one containing `manifest.json`).
@@ -216,7 +216,7 @@ All settings live in one file, `config.js`:
 
 ```js
 export const NEXUS_CONFIG = Object.freeze({
-  DEMO_MODE: true,                         // true = fake demo results, no network; false = real backend
+  DEMO_MODE: false,                        // true = fake demo results, no network; false = real backend
   API_BASE_URL: "http://localhost:8000",   // Nexus backend
   NEXUS_APP_URL: "http://localhost:5173",  // main Nexus web app ("View Full Analysis")
   REQUEST_TIMEOUT_MS: 15000,
@@ -227,7 +227,7 @@ export const NEXUS_CONFIG = Object.freeze({
 
 | Setting | What it does | If you change it |
 | --- | --- | --- |
-| `DEMO_MODE` | `true` (default): simulated results from `demo-data.js`, no network requests. `false`: real Nexus backend. | Reload the extension. |
+| `DEMO_MODE` | `false` (default): real Nexus backend. `true`: simulated results from `demo-data.js`, with no network requests. | Reload the extension. |
 | `API_BASE_URL` | Address of the Nexus backend. | Also update `host_permissions` in `manifest.json` to the same origin (for example `"https://api.example.com/*"`), then reload the extension. |
 | `NEXUS_APP_URL` | The main Nexus web app opened by **View Full Analysis** and **Open Nexus**. | Just reload the extension. Use your deployed URL when there is one. |
 | `REQUEST_TIMEOUT_MS` | How long to wait for the backend. | Just reload. |
