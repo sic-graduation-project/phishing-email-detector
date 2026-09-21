@@ -1,26 +1,34 @@
 import pandas as pd
 import re
 import ipaddress
+import tldextract
+
+from pathlib import Path
 from urllib.parse import urlparse
 
+
 # ==========================================
-# 1. Load Dataset
+# Project Paths
 # ==========================================
-import os
 
-DATASET_PATH = r"C:\Users\User\Documents\GitHub\phishing-email-detector\data\processed\cleaned_dataset.csv"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-OUTPUT_FILE = r"C:\Users\User\Documents\GitHub\phishing-email-detector\data\features\url_sender_features_output.csv"
+DATASET_PATH = (
+    PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "cleaned_dataset.csv"
+)
+
+OUTPUT_FILE = (
+    PROJECT_ROOT
+    / "data"
+    / "FEATURES"
+    / "url_sender_features_output.csv"
+)
 
 
-df = pd.read_csv(DATASET_PATH)
-print("\n==========================================")
-print("DATASET INFORMATION")
-print("==========================================")
-print("Total Emails:", len(df))
-print("Number of Columns:", len(df.columns))
-print("Columns:")
-print(df.columns.tolist())
+
 
 
 # ==========================================
@@ -519,26 +527,21 @@ def SenderHasDisplayName(sender):
 
 
 def GetBaseDomain(domain):
-
     if not domain:
         return ""
 
     try:
-
         ipaddress.ip_address(domain)
-
-        return domain
-
+        return domain.lower()
     except ValueError:
         pass
 
-    parts = domain.lower().split(".")
+    extracted = tldextract.extract(domain)
 
-    if len(parts) >= 2:
+    if not extracted.domain or not extracted.suffix:
+        return domain.lower()
 
-        return ".".join(parts[-2:])
-
-    return domain.lower()
+    return f"{extracted.domain}.{extracted.suffix}".lower()
 
 
 # ==========================================
@@ -775,307 +778,321 @@ FINAL_ML_FEATURES = [
 ]
 
 
-print("\nNumber of URL Features:", len(url_features))
-
-print("Number of Sender Features:", len(sender_features))
-
-print("Number of Final ML Features:", len(FINAL_ML_FEATURES))
-
-print("Domain mismatch is Risk Indicator only.")
 
 
-# ==========================================
-# 31. Apply Feature Extraction To Dataset
-# ==========================================
+def run_dataset_analysis():
 
-print("\n==========================================")
-print("EXTRACTING URL + SENDER FEATURES")
-print("==========================================")
+    if not DATASET_PATH.exists():
+        raise FileNotFoundError(
+            f"Dataset not found: {DATASET_PATH}"
+        )
 
+    df = pd.read_csv(DATASET_PATH)
+    print("Number of URL Features:", len(url_features))
+    print("Number of Sender Features:", len(sender_features))
+    print("Number of Final ML Features:", len(FINAL_ML_FEATURES))
+    print("Domain mismatch is Risk Indicator only.")
+    print("\n==========================================")
+    print("DATASET INFORMATION")
+    print("==========================================")
+    print("Total Emails:", len(df))
+    print("Number of Columns:", len(df.columns))
+    print("Columns:")
+    print(df.columns.tolist())
 
-features = df.apply(lambda row: ExtractFeatures(row["sender"], row["body"]), axis=1)
+    # ==========================================
+    # 31. Apply Feature Extraction To Dataset
+    # ==========================================
 
+    print("\n==========================================")
+    print("EXTRACTING URL + SENDER FEATURES")
+    print("==========================================")
 
-# ==========================================
-# 32. Convert Features To DataFrame
-# ==========================================
-
-features_df = pd.DataFrame(list(features))
-
-
-# ==========================================
-# 33. Validate Feature Extraction
-#
-# This prevents silent errors.
-# ==========================================
-
-expected_feature_columns = FINAL_ML_FEATURES + [
-    "sender_has_ip",
-    "domain_mismatch",
-    "sender_domain",
-    "cleaned_urls",
-]
-
-
-missing_feature_columns = [
-    column for column in expected_feature_columns if column not in features_df.columns
-]
-
-
-if missing_feature_columns:
-
-    raise ValueError(
-        "Feature extraction failed. " "Missing columns: " + str(missing_feature_columns)
+    features = df.apply(
+        lambda row: ExtractFeatures(
+            row["sender"],
+            row["body"]
+        ),
+        axis=1,
     )
+    # ==========================================
+    # 32. Convert Features To DataFrame
+    # ==========================================
+
+    features_df = pd.DataFrame(list(features))
 
 
-print("\nFeature extraction completed successfully.")
+    # ==========================================
+    # 33. Validate Feature Extraction
+    #
+    # This prevents silent errors.
+    # ==========================================
 
-print("Extracted Feature Columns:", features_df.columns.tolist())
-
-
-# ==========================================
-# 34. Merge Features With Original Dataset
-# ==========================================
-
-df["cleaned_urls"] = features_df["cleaned_urls"]
-
-df["sender_domain"] = features_df["sender_domain"]
-
-
-for column in features_df.columns:
-
-    if column not in ["cleaned_urls", "sender_domain"]:
-
-        df[column] = features_df[column]
+    expected_feature_columns = FINAL_ML_FEATURES + [
+        "sender_has_ip",
+        "domain_mismatch",
+        "sender_domain",
+        "cleaned_urls",
+    ]
 
 
-# ==========================================
-# 35. Show Feature Examples
-# ==========================================
-
-print("\n==========================================")
-print("FEATURE EXAMPLES")
-print("==========================================")
+    missing_feature_columns = [
+        column for column in expected_feature_columns if column not in features_df.columns
+    ]
 
 
-print(
-    df[["email_id"] + FINAL_ML_FEATURES + ["domain_mismatch", "sender_domain"]].head()
-)
+    if missing_feature_columns:
+
+        raise ValueError(
+            "Feature extraction failed. " "Missing columns: " + str(missing_feature_columns)
+        )
 
 
-# ==========================================
-# 36. URL Statistics
-# ==========================================
+    print("\nFeature extraction completed successfully.")
 
-print("\n==========================================")
-print("URL STATISTICS")
-print("==========================================")
+    print("Extracted Feature Columns:", features_df.columns.tolist())
 
 
-print("Emails with extracted URLs:", (df["url_count"] > 0).sum())
+    # ==========================================
+    # 34. Merge Features With Original Dataset
+    # ==========================================
+
+    df["cleaned_urls"] = features_df["cleaned_urls"]
+
+    df["sender_domain"] = features_df["sender_domain"]
 
 
-print("Emails without extracted URLs:", (df["url_count"] == 0).sum())
+    for column in features_df.columns:
+
+        if column not in ["cleaned_urls", "sender_domain"]:
+
+            df[column] = features_df[column]
 
 
-print("Total extracted URLs:", df["url_count"].sum())
+    # ==========================================
+    # 35. Show Feature Examples
+    # ==========================================
 
+    print("\n==========================================")
+    print("FEATURE EXAMPLES")
+    print("==========================================")
 
-print("Maximum URLs in one email:", df["url_count"].max())
-
-
-# ==========================================
-# 37. Compare Original urls Column
-# With Extracted URLs
-# ==========================================
-
-print("\n==========================================")
-print("ORIGINAL URL INDICATOR VS EXTRACTION")
-print("==========================================")
-
-
-if "urls" in df.columns:
-
-    print("\nOriginal urls column:")
-
-    print(df["urls"].value_counts(dropna=False))
 
     print(
-        "\nRows with urls = 1 " "but url_count = 0:",
-        ((df["urls"] == 1) & (df["url_count"] == 0)).sum(),
-    )
-
-    print(
-        "Rows with urls = 0 " "but url_count > 0:",
-        ((df["urls"] == 0) & (df["url_count"] > 0)).sum(),
+        df[["email_id"] + FINAL_ML_FEATURES + ["domain_mismatch", "sender_domain"]].head()
     )
 
 
-# ==========================================
-# 38. Sender Statistics
-# ==========================================
+    # ==========================================
+    # 36. URL Statistics
+    # ==========================================
 
-print("\n==========================================")
-print("SENDER STATISTICS")
-print("==========================================")
-
-
-print("Sender domains extracted:", (df["sender_domain"] != "").sum())
+    print("\n==========================================")
+    print("URL STATISTICS")
+    print("==========================================")
 
 
-print("Sender domains missing:", (df["sender_domain"] == "").sum())
+    print("Emails with extracted URLs:", (df["url_count"] > 0).sum())
 
 
-print("Sender display names:", df["sender_has_display_name"].sum())
+    print("Emails without extracted URLs:", (df["url_count"] == 0).sum())
 
 
-print("Sender IP:", df["sender_has_ip"].sum())
+    print("Total extracted URLs:", df["url_count"].sum())
 
 
-# ==========================================
-# 39. Feature Means By Label
-# ==========================================
-
-print("\n==========================================")
-print("FEATURE MEANS BY LABEL")
-print("==========================================")
+    print("Maximum URLs in one email:", df["url_count"].max())
 
 
-if "label" in df.columns:
+    # ==========================================
+    # 37. Compare Original urls Column
+    # With Extracted URLs
+    # ==========================================
 
-    feature_means = df.groupby("label")[FINAL_ML_FEATURES].mean().round(4)
-
-    print(feature_means)
-
-
-# ==========================================
-# 40. Correlation With Label
-# ==========================================
-
-print("\n==========================================")
-print("CORRELATION WITH LABEL")
-print("==========================================")
+    print("\n==========================================")
+    print("ORIGINAL URL INDICATOR VS EXTRACTION")
+    print("==========================================")
 
 
-if "label" in df.columns:
+    if "urls" in df.columns:
 
-    correlations = (
-        df[FINAL_ML_FEATURES + ["label"]]
-        .corr()["label"]
-        .drop("label")
-        .sort_values(key=abs, ascending=False)
+        print("\nOriginal urls column:")
+
+        print(df["urls"].value_counts(dropna=False))
+
+        print(
+            "\nRows with urls = 1 " "but url_count = 0:",
+            ((df["urls"] == 1) & (df["url_count"] == 0)).sum(),
+        )
+
+        print(
+            "Rows with urls = 0 " "but url_count > 0:",
+            ((df["urls"] == 0) & (df["url_count"] > 0)).sum(),
+        )
+
+
+    # ==========================================
+    # 38. Sender Statistics
+    # ==========================================
+
+    print("\n==========================================")
+    print("SENDER STATISTICS")
+    print("==========================================")
+
+
+    print("Sender domains extracted:", (df["sender_domain"] != "").sum())
+
+
+    print("Sender domains missing:", (df["sender_domain"] == "").sum())
+
+
+    print("Sender display names:", df["sender_has_display_name"].sum())
+
+
+    print("Sender IP:", df["sender_has_ip"].sum())
+
+
+    # ==========================================
+    # 39. Feature Means By Label
+    # ==========================================
+
+    print("\n==========================================")
+    print("FEATURE MEANS BY LABEL")
+    print("==========================================")
+
+
+    if "label" in df.columns:
+
+        feature_means = df.groupby("label")[FINAL_ML_FEATURES].mean().round(4)
+
+        print(feature_means)
+
+
+    # ==========================================
+    # 40. Correlation With Label
+    # ==========================================
+
+    print("\n==========================================")
+    print("CORRELATION WITH LABEL")
+    print("==========================================")
+
+
+    if "label" in df.columns:
+
+        correlations = (
+            df[FINAL_ML_FEATURES + ["label"]]
+            .corr()["label"]
+            .drop("label")
+            .sort_values(key=abs, ascending=False)
+        )
+
+        print(correlations.round(6))
+
+
+    # ==========================================
+    # 41. Missing Values
+    # ==========================================
+
+    print("\n==========================================")
+    print("MISSING VALUES")
+    print("==========================================")
+
+
+    print(df[FINAL_ML_FEATURES].isnull().sum())
+
+
+    # ==========================================
+    # 42. Check Constant Features
+    # ==========================================
+
+    print("\n==========================================")
+    print("CONSTANT FEATURES")
+    print("==========================================")
+
+
+    constant_features = []
+
+
+    for feature in FINAL_ML_FEATURES:
+
+        if df[feature].nunique(dropna=False) <= 1:
+
+            constant_features.append(feature)
+
+
+    if constant_features:
+
+        print("Constant features:", constant_features)
+
+    else:
+
+        print("No constant features.")
+
+
+    # ==========================================
+    # 43. Risk Indicator Statistics
+    # ==========================================
+
+    print("\n==========================================")
+    print("RISK INDICATORS")
+    print("==========================================")
+
+
+    risk_features = [
+        "has_ip_url",
+        "has_shortened_url",
+        "has_at_in_url",
+        "has_suspicious_url_word",
+        "has_suspicious_characters",
+        "max_subdomain_count",
+        "url_parameter_count",
+        "domain_mismatch",
+        "has_http",
+    ]
+
+
+    for feature in risk_features:
+
+        print(feature, "=>", int(df[feature].sum()))
+
+
+    # ==========================================
+    # 44. Save Dataset
+    #
+    # Keep email_id so NLP + URL features
+    # can later be merged using email_id.
+    #
+    # domain_mismatch is also saved because
+    # it is useful as a Risk Indicator.
+    # ==========================================
+
+    output_columns = (
+        ["email_id"] + FINAL_ML_FEATURES + ["sender_domain", "domain_mismatch", "label"]
     )
 
-    print(correlations.round(6))
+
+    output_df = df[output_columns].copy()
 
 
-# ==========================================
-# 41. Missing Values
-# ==========================================
+    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-print("\n==========================================")
-print("MISSING VALUES")
-print("==========================================")
+    output_df.to_csv(OUTPUT_FILE, index=False)
+
+    print("Saved to:", OUTPUT_FILE.resolve())
 
 
-print(df[FINAL_ML_FEATURES].isnull().sum())
+    print("\n==========================================")
+    print("OUTPUT FILE")
+    print("==========================================")
 
 
-# ==========================================
-# 42. Check Constant Features
-# ==========================================
-
-print("\n==========================================")
-print("CONSTANT FEATURES")
-print("==========================================")
+    print("Saved:", OUTPUT_FILE)
 
 
-constant_features = []
+    print("Output Shape:", output_df.shape)
 
 
-for feature in FINAL_ML_FEATURES:
-
-    if df[feature].nunique(dropna=False) <= 1:
-
-        constant_features.append(feature)
-
-
-if constant_features:
-
-    print("Constant features:", constant_features)
-
-else:
-
-    print("No constant features.")
-
-
-# ==========================================
-# 43. Risk Indicator Statistics
-# ==========================================
-
-print("\n==========================================")
-print("RISK INDICATORS")
-print("==========================================")
-
-
-risk_features = [
-    "has_ip_url",
-    "has_shortened_url",
-    "has_at_in_url",
-    "has_suspicious_url_word",
-    "has_suspicious_characters",
-    "max_subdomain_count",
-    "url_parameter_count",
-    "domain_mismatch",
-    "has_http",
-]
-
-
-for feature in risk_features:
-
-    print(feature, "=>", int(df[feature].sum()))
-
-
-# ==========================================
-# 44. Save Dataset
-#
-# Keep email_id so NLP + URL features
-# can later be merged using email_id.
-#
-# domain_mismatch is also saved because
-# it is useful as a Risk Indicator.
-# ==========================================
-
-output_columns = (
-    ["email_id"] + FINAL_ML_FEATURES + ["sender_domain", "domain_mismatch", "label"]
-)
-
-
-output_df = df[output_columns].copy()
-
-
-output_df = df[output_columns].copy()
-
-os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
-
-output_df.to_csv(OUTPUT_FILE, index=False)
-
-print("Saved to:", os.path.abspath(OUTPUT_FILE))
-
-
-print("\n==========================================")
-print("OUTPUT FILE")
-print("==========================================")
-
-
-print("Saved:", OUTPUT_FILE)
-
-
-print("Output Shape:", output_df.shape)
-
-
-print("Output Columns:", output_df.columns.tolist())
+    print("Output Columns:", output_df.columns.tolist())
 
 
 # ==========================================
@@ -1187,75 +1204,64 @@ def analyze_single_email(sender, body):
     }
 
 
-# ==========================================
-# 46. Test Backend Function
-# ==========================================
+if __name__ == "__main__":
 
-print("\n==========================================")
-print("BACKEND FUNCTION TEST")
-print("==========================================")
+    # Run full dataset analysis
+    run_dataset_analysis()
 
+    # ==========================================
+    # 46. Test Backend Function
+    # ==========================================
 
-test_sender = "support@example.com"
+    print("\n==========================================")
+    print("BACKEND FUNCTION TEST")
+    print("==========================================")
 
+    test_sender = "support@example.com"
 
-test_body = """
+    test_body = """
+    Hello,
 
-Hello,
+    Please verify your account.
 
-Please verify your account.
+    http://192.168.1.10/login
 
-http://192.168.1.10/login
+    www.example.com
 
-www.example.com
+    https://bit.ly/example
 
-https://bit.ly/example
+    Thank you.
+    """
 
-Thank you.
+    test_result = analyze_single_email(
+        test_sender,
+        test_body,
+    )
 
-"""
+    print("\nSender Domain:")
+    print(test_result["sender_domain"])
 
+    print("\nExtracted URLs:")
+    print(test_result["extracted_urls"])
 
-test_result = analyze_single_email(test_sender, test_body)
+    print("\nML Features:")
+    print(test_result["features"])
 
+    print("\nDomain Mismatch:")
+    print(test_result["domain_mismatch"])
 
-print("\nSender Domain:")
+    print("\nRisk Indicators:")
 
-print(test_result["sender_domain"])
+    for indicator in test_result["risk_indicators"]:
+        print("-", indicator)
 
+    print("\nIndicator Count:")
+    print(test_result["indicator_count"])
 
-print("\nExtracted URLs:")
-
-print(test_result["extracted_urls"])
-
-
-print("\nML Features:")
-
-print(test_result["features"])
-
-
-print("\nDomain Mismatch:")
-
-print(test_result["domain_mismatch"])
-
-
-print("\nRisk Indicators:")
-
-
-for indicator in test_result["risk_indicators"]:
-
-    print("-", indicator)
-
-
-print("\nIndicator Count:")
-
-print(test_result["indicator_count"])
-
+    print("\n==========================================")
+    print("DONE")
+    print("==========================================")
 
 # ==========================================
 # 47. Finished
 # ==========================================
-
-print("\n==========================================")
-print("DONE")
-print("==========================================")
