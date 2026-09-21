@@ -3,3 +3,9 @@ uvicorn[standard]
 pytest
 httpx
 python-dotenv
+pandas
+scipy
+scikit-learn==1.9.1
+joblib
+contractions
+tldextract

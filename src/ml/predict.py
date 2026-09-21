@@ -1,5 +1,7 @@
 from pathlib import Path
 from typing import Any
+from contextlib import redirect_stdout
+import io
 
 import joblib
 import pandas as pd
@@ -119,9 +121,12 @@ def prepare_single_email(
         ]
     )
 
-    nlp_df = build_nlp_features(
-        email_df
-    )
+    # The shared NLP builder prints progress for batch training. Suppress those
+    # messages for single-request API inference.
+    with redirect_stdout(io.StringIO()):
+        nlp_df = build_nlp_features(
+            email_df
+        )
 
     clean_body = nlp_df.loc[
         0,
