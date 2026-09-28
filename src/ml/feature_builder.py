@@ -11,7 +11,7 @@ URL_FEATURES_PATH = (
 )
 
 
-URL_SENDER_FEATURES = [
+URL_FEATURES = [
     "url_count",
     "max_url_length",
     "has_https",
@@ -23,11 +23,20 @@ URL_SENDER_FEATURES = [
     "url_parameter_count",
     "has_suspicious_characters",
     "has_suspicious_url_word",
+]
+
+SENDER_FEATURES = [
     "sender_email_length",
     "sender_domain_length",
     "sender_local_part_length",
     "sender_has_display_name",
 ]
+
+# Kept for dataset validation and analysis. The production model deliberately
+# excludes sender features because URL/text scans and the current email API do
+# not provide a trustworthy sender value.
+URL_SENDER_FEATURES = URL_FEATURES + SENDER_FEATURES
+PRODUCTION_URL_FEATURES = URL_FEATURES
 
 
 def load_csv(path: Path, name: str) -> pd.DataFrame:

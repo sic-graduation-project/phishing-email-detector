@@ -1,2 +1,1 @@
-# هذا الملف يجعل app حزمة Python قابلة للاستيراد.
-
+"""FastAPI application package."""

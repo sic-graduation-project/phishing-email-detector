@@ -103,9 +103,10 @@ def main():
     data = prepare_features()
 
     X_train = data["X_train"]
-    X_test = data["X_test"]
+    # Model comparison uses validation only. The final test set remains locked.
+    X_test = data["X_validation"]
     y_train = data["y_train"]
-    y_test = data["y_test"]
+    y_test = data["y_validation"]
 
     models = [
         (

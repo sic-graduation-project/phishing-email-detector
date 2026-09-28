@@ -5,15 +5,14 @@ from pathlib import Path
 import sys
 from typing import Any, Callable
 
-from app.schemas.analysis import AnalysisResponse
+from ..risk_policy import apply_email_risk_policy, score_text_analysis, score_url_analysis
+from ..schemas.analysis import AnalysisResponse
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 ML_DIR = PROJECT_ROOT / "src" / "ml"
 URL_ANALYSIS_DIR = PROJECT_ROOT / "src" / "url_analysis"
 
-# The team modules are scripts rather than installed packages. Register their
-# directories in one place so the API reuses the original trained pipeline.
 for module_dir in (ML_DIR, URL_ANALYSIS_DIR):
     module_path = str(module_dir)
     if module_path not in sys.path:
@@ -22,82 +21,68 @@ for module_dir in (ML_DIR, URL_ANALYSIS_DIR):
 
 @lru_cache(maxsize=1)
 def _load_pipeline() -> tuple[Callable[..., dict[str, Any]], Callable[..., dict[str, Any]]]:
-    """Load model artifacts and the URL analyzer once per API process."""
+    """Load the production bundle and URL analyzer once per API process."""
     from analyzer import analyze_single_email
     from predict import predict_from_analysis
 
     return analyze_single_email, predict_from_analysis
 
 
-def _reason_list(result: dict[str, Any]) -> list[str]:
-    reasons = list(result.get("risk_indicators", []))
-    if reasons:
-        return reasons
-    if result["prediction"] == "Phishing":
-        return ["The trained model detected phishing-like language or structure"]
-    return ["No strong phishing indicators were detected"]
+def ensure_ready() -> None:
+    """Fail readiness when the URL analyzer or model bundle cannot load."""
+    _load_pipeline()
 
 
-def _analyze_with_email_model(
-    *, input_type: str, sender: str, subject: str, body: str
+def _response(
+    *, input_type: str, score: float, reasons: list[str], model_flagged: bool = False
 ) -> AnalysisResponse:
-    analyze_single_email, predict_from_analysis = _load_pipeline()
-    url_result = analyze_single_email(sender, body)
-    result = predict_from_analysis(
-        sender=sender,
-        subject=subject,
-        body=body,
-        url_analysis_result=url_result,
-    )
+    classification = "Phishing" if model_flagged or score >= 50 else "Legitimate"
+    if classification == "Phishing":
+        score = max(score, 50.0)
+        if not reasons:
+            reasons = ["Machine-learning model detected phishing language patterns"]
+    elif not reasons:
+        reasons = ["No strong phishing indicators were detected"]
     return AnalysisResponse(
         input_type=input_type,
-        classification=result["prediction"],
-        risk_score=result["risk_score"],
-        reasons=_reason_list(result),
+        classification=classification,
+        risk_score=round(score, 2),
+        reasons=reasons,
     )
 
 
 def analyze_email(sender: str | None, subject: str | None, body: str) -> AnalysisResponse:
-    return _analyze_with_email_model(
-        input_type="email",
-        sender=sender or "",
-        subject=subject or "",
+    analyze_single_email, predict_from_analysis = _load_pipeline()
+    clean_sender = sender or ""
+    clean_subject = subject or ""
+    combined_text = f"{clean_subject}\n{body}".strip()
+    url_result = analyze_single_email(clean_sender, combined_text)
+    prediction = predict_from_analysis(
+        sender=clean_sender,
+        subject=clean_subject,
         body=body,
+        url_analysis_result=url_result,
+    )
+    score, reasons = apply_email_risk_policy(
+        prediction["risk_score"], combined_text, url_result
+    )
+    return _response(
+        input_type="email",
+        score=score,
+        reasons=reasons,
+        model_flagged=prediction["label"] == 1,
     )
 
 
 def analyze_url(url: str) -> AnalysisResponse:
     analyze_single_email, _ = _load_pipeline()
     url_result = analyze_single_email("", url)
-    features = url_result["features"]
-
-    # The trained model classifies complete emails; it must not receive a URL
-    # as if it were an email body. Score standalone URLs only from URL-specific
-    # features. The capped additive score is deliberately explainable and keeps
-    # a clean HTTPS URL at zero risk.
-    reasons = list(url_result["risk_indicators"])
-    risk_score = (
-        features["has_ip_url"] * 40
-        + features["has_shortened_url"] * 30
-        + features["has_at_in_url"] * 25
-        + features["has_suspicious_url_word"] * 20
-        + features["has_suspicious_characters"] * 15
-        + features["has_http"] * 15
-        + (15 if features["max_subdomain_count"] >= 3 else 0)
-        + (15 if features["url_parameter_count"] >= 5 else 0)
-    )
-    if features["max_url_length"] >= 100:
-        risk_score += 10
-        reasons.append("URL is unusually long")
-    risk_score = min(100, risk_score)
-
-    return AnalysisResponse(
-        input_type="url",
-        classification="Phishing" if risk_score >= 50 else "Legitimate",
-        risk_score=float(risk_score),
-        reasons=reasons or ["No suspicious URL indicators were detected"],
-    )
+    score, reasons = score_url_analysis(url_result)
+    return _response(input_type="url", score=score, reasons=reasons)
 
 
 def analyze_text(text: str) -> AnalysisResponse:
-    return _analyze_with_email_model(input_type="text", sender="", subject="", body=text)
+    analyze_single_email, _ = _load_pipeline()
+    url_result = analyze_single_email("", text)
+    score, reasons = score_text_analysis(text, url_result)
+    return _response(input_type="text", score=score, reasons=reasons)

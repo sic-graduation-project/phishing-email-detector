@@ -14,7 +14,9 @@ DISPLAY_NAME_PATTERN = re.compile(
     r"^(.+?)\s*<([\w.\-+%]+@[\w.\-]+\.[a-z]{2,})>$",
     re.IGNORECASE,
 )
-TLD_EXTRACTOR = tldextract.TLDExtract(suffix_list_urls=())
+# Use the bundled suffix snapshot without a shared cache. API requests must not
+# perform network access or wait on a cache lock.
+TLD_EXTRACTOR = tldextract.TLDExtract(suffix_list_urls=(), cache_dir=None)
 
 SHORTENER_DOMAINS = {
     "bit.ly",

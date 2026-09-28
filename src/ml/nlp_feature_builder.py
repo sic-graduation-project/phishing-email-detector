@@ -280,6 +280,7 @@ def statistical_features(
 
 def build_nlp_features(
     df: pd.DataFrame,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     required_columns = [
         "email_id",
@@ -307,13 +308,14 @@ def build_nlp_features(
     result["body"] = result["body"].fillna("")
     result["subject"] = result["subject"].fillna("")
 
-    print("Normalizing body text...")
+    log = print if verbose else lambda *_args, **_kwargs: None
+    log("Normalizing body text...")
 
     result["normalized_body"] = (
         result["body"].apply(normalize_text)
     )
 
-    print("Cleaning body text...")
+    log("Cleaning body text...")
 
     result["clean_body"] = (
         result["body"].apply(clean_text)
@@ -323,7 +325,7 @@ def build_nlp_features(
     # Body phishing features
     # --------------------------------------------------------
 
-    print("Extracting body features...")
+    log("Extracting body features...")
 
     body_features = pd.DataFrame(
         result["body"]
@@ -338,7 +340,7 @@ def build_nlp_features(
     # Subject phishing features
     # --------------------------------------------------------
 
-    print("Extracting subject features...")
+    log("Extracting subject features...")
 
     subject_features = pd.DataFrame(
         result["subject"]
@@ -355,7 +357,7 @@ def build_nlp_features(
     # Keyword feature
     # --------------------------------------------------------
 
-    print("Extracting phishing keyword feature...")
+    log("Extracting phishing keyword feature...")
 
     result["keyword_count"] = (
         result["clean_body"]
@@ -366,7 +368,7 @@ def build_nlp_features(
     # Statistical features
     # --------------------------------------------------------
 
-    print("Extracting statistical features...")
+    log("Extracting statistical features...")
 
     statistics = result.apply(
         lambda row: statistical_features(

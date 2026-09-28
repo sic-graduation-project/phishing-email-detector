@@ -32,9 +32,10 @@ def train_logistic_regression():
     data = prepare_features()
 
     X_train = data["X_train"]
-    X_test = data["X_test"]
+    # Experimental logistic-regression evaluation uses validation only.
+    X_test = data["X_validation"]
     y_train = data["y_train"]
-    y_test = data["y_test"]
+    y_test = data["y_validation"]
 
     print("\n" + "=" * 60)
     print("TRAINING LOGISTIC REGRESSION")
@@ -132,7 +133,8 @@ def train_logistic_regression():
     )
 
     # --------------------------------------------------------
-    # Save model
+    # Save the experimental estimator separately. This cannot overwrite the
+    # atomic production bundle used by predict.py.
     # --------------------------------------------------------
 
     MODELS_DIR.mkdir(
@@ -142,7 +144,7 @@ def train_logistic_regression():
 
     model_path = (
         MODELS_DIR
-        / "logistic_regression.pkl"
+        / "logistic_regression_experimental.pkl"
     )
 
     joblib.dump(

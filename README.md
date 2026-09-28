@@ -1,423 +1,916 @@
-<div align="center">
+# phishing-email-detector
+AI-powered phishing email detection system developed by Nexus Team for the Samsung Innovation Campus Graduation Project.
 
-<img src="extension/assets/nexus-logo.png" alt="Nexus logo" width="110">
+## Run the integrated application
 
-# Nexus — AI Phishing Detector
-
-### Detect suspicious emails, URLs, and messages before they become threats.
-
-[![Samsung Innovation Campus](https://img.shields.io/badge/Samsung_Innovation_Campus-Capstone_Project-1428A0?style=flat-square&logo=samsung&logoColor=white)](https://www.samsung.com/)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-REST_API-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-19-20232A?style=flat-square&logo=react&logoColor=61DAFB)](https://react.dev/)
-[![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?style=flat-square&logo=googlechrome&logoColor=white)](extension/)
-[![License](https://img.shields.io/badge/License-All_Rights_Reserved-334155?style=flat-square)](#license--rights)
-
-[Overview](#overview) · [Features](#key-features) · [Architecture](#system-architecture) · [Quick Start](#quick-start) · [API](#api-reference) · [Team](#nexus-team)
-
-</div>
-
----
-
-## Overview
-
-**Nexus** is an end-to-end phishing detection platform developed as a graduation project for the **Samsung Innovation Campus**. It brings email analysis, natural-language processing, machine learning, URL inspection, a modern web dashboard, and a Chrome extension together in one integrated system.
-
-Users can analyze three types of content:
-
-- **Emails** — sender, subject, body, embedded URLs, and linguistic signals.
-- **URLs** — structural and security indicators through an explainable scoring engine.
-- **Text** — suspicious language and phishing patterns through the NLP/ML pipeline.
-
-Every analysis returns a classification, a risk score from `0` to `100`, and human-readable indicators explaining the result.
-
-> Nexus is a decision-support tool. A low-risk result does not guarantee that content is safe, and users should still verify unexpected requests through trusted channels.
-
----
-
-## Key Features
-
-| Capability | Description |
-| --- | --- |
-| 📧 **Email analysis** | Combines sender metadata, subject/body NLP, embedded URL features, TF-IDF, and a calibrated ML model. |
-| 🔗 **URL inspection** | Detects IP-based URLs, shorteners, insecure HTTP, suspicious words, unusual characters, deep subdomains, and excessive parameters. |
-| 🧠 **Explainable results** | Returns a classification, risk score, and readable reasons instead of an unexplained label. |
-| 📊 **Analysis dashboard** | Stores scan history locally and presents statistics, charts, common indicators, and recent results. |
-| 🧩 **Chrome extension** | Scans selected text or links directly from Chrome's context menu. |
-| 🌗 **Responsive interface** | Modern responsive UI with light and dark themes. |
-| 📖 **Interactive API docs** | Swagger UI and ReDoc are generated automatically by FastAPI. |
-| 🔒 **Local-first history** | Scan history is stored in the browser's `localStorage`; the backend does not persist submitted content. |
-
----
-
-## System Architecture
-
-```mermaid
-flowchart LR
-    U[User] --> W[React Web App]
-    U --> X[Chrome Extension]
-
-    W --> API[FastAPI REST API]
-    X --> API
-
-    API --> T{Input Type}
-    T -->|Email| E[Email Pipeline]
-    T -->|Text| N[NLP Pipeline]
-    T -->|URL| R[URL Risk Engine]
-
-    E --> F[Sender + URL Features]
-    E --> N
-    F --> M[Calibrated Linear SVC]
-    N --> M
-
-    R --> O[Classification + Risk Score + Indicators]
-    M --> O
-    O --> W
-    O --> X
+```powershell
+python -m pip install -r requirements.txt
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
-### Email Analysis Flow
+In a second terminal:
 
-```mermaid
-flowchart TD
-    A[Sender + Subject + Body] --> B[Text Normalization]
-    B --> C[TF-IDF Features]
-    B --> D[8 NLP Numeric Features]
-    A --> E[15 URL and Sender Features]
-    C --> F[10,023-Feature Vector]
-    D --> F
-    E --> F
-    F --> G[Calibrated Linear SVC]
-    G --> H[Phishing Probability]
-    H --> I[Verdict + Risk Score + Reasons]
-```
-
-### URL Analysis Flow
-
-Standalone URLs are intentionally analyzed by a dedicated, explainable URL risk engine. They are **not** passed to the email model as email bodies.
-
-```mermaid
-flowchart LR
-    A[URL] --> B[Normalize and Parse]
-    B --> C[Protocol and Domain]
-    B --> D[IP / Shortener / @]
-    B --> E[Words / Characters]
-    B --> F[Subdomains / Parameters / Length]
-    C --> G[Weighted Risk Score]
-    D --> G
-    E --> G
-    F --> G
-    G --> H[Legitimate or Phishing]
-```
-
-<div align="center">
-  <img src="docs/images/project-workflow.jpg" alt="Nexus project workflow" width="820">
-  <br>
-  <sub>Original team workflow from data preparation to the final user experience.</sub>
-</div>
-
----
-
-## Technology Stack
-
-### Frontend
-
-![React](https://img.shields.io/badge/React-19-20232A?style=flat-square&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?style=flat-square&logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
-![Axios](https://img.shields.io/badge/Axios-HTTP_Client-5A29E4?style=flat-square&logo=axios&logoColor=white)
-![Recharts](https://img.shields.io/badge/Recharts-Data_Visualization-22B5BF?style=flat-square)
-
-### Backend & API
-
-![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-REST_API-009688?style=flat-square&logo=fastapi&logoColor=white)
-![Pydantic](https://img.shields.io/badge/Pydantic-Validation-E92063?style=flat-square&logo=pydantic&logoColor=white)
-![Uvicorn](https://img.shields.io/badge/Uvicorn-ASGI_Server-499848?style=flat-square)
-![Swagger](https://img.shields.io/badge/Swagger-API_Docs-85EA2D?style=flat-square&logo=swagger&logoColor=111827)
-
-### AI, NLP & Data
-
-![scikit-learn](https://img.shields.io/badge/scikit--learn-1.9.1-F7931E?style=flat-square&logo=scikitlearn&logoColor=white)
-![Pandas](https://img.shields.io/badge/Pandas-Data_Processing-150458?style=flat-square&logo=pandas&logoColor=white)
-![NumPy](https://img.shields.io/badge/NumPy-Numerical_Computing-013243?style=flat-square&logo=numpy&logoColor=white)
-![SciPy](https://img.shields.io/badge/SciPy-Scientific_Computing-8CAAE6?style=flat-square&logo=scipy&logoColor=white)
-![NLTK](https://img.shields.io/badge/NLTK-NLP-154F3C?style=flat-square)
-![Joblib](https://img.shields.io/badge/Joblib-Model_Artifacts-334155?style=flat-square)
-
-### Browser & Development
-
-![Chrome](https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?style=flat-square&logo=googlechrome&logoColor=white)
-![Git](https://img.shields.io/badge/Git-Version_Control-F05032?style=flat-square&logo=git&logoColor=white)
-![GitHub](https://img.shields.io/badge/GitHub-Collaboration-181717?style=flat-square&logo=github&logoColor=white)
-![Pytest](https://img.shields.io/badge/Pytest-Backend_Tests-0A9EDC?style=flat-square&logo=pytest&logoColor=white)
-![Oxlint](https://img.shields.io/badge/Oxlint-Frontend_Linting-6B57FF?style=flat-square)
-
----
-
-## Machine Learning Pipeline
-
-The final email classifier combines three feature groups:
-
-| Feature group | Count | Examples |
-| --- | ---: | --- |
-| TF-IDF text features | 10,000 | Unigrams and bigrams extracted from normalized email bodies. |
-| URL and sender features | 15 | URL count, HTTPS/HTTP, IP URLs, shorteners, domain and sender structure. |
-| NLP numeric features | 8 | URL count, uppercase ratio, punctuation, keywords, and word count. |
-| **Total** | **10,023** | Combined sparse feature vector used for inference. |
-
-The selected model is a **Calibrated Linear SVC**, providing both strong classification performance and a phishing probability suitable for the risk gauge.
-
-| Evaluation metric | Result |
-| --- | ---: |
-| Accuracy | 99.73% |
-| Precision | 99.74% |
-| Recall | 99.77% |
-| F1-score | 99.76% |
-| ROC-AUC | 99.98% |
-
-> These figures are evaluation results on the project's held-out dataset. They should not be interpreted as guaranteed performance on every real-world email or future phishing technique.
-
----
-
-## Project Structure
-
-```text
-phishing-email-detector/
-├── backend/                 # FastAPI application, schemas, services, and tests
-│   ├── app/
-│   │   ├── core/            # Environment-based configuration
-│   │   ├── routes/          # Health and analysis endpoints
-│   │   ├── schemas/         # Request and response validation
-│   │   └── services/        # ML and URL-analysis integration
-│   ├── scripts/             # Static Swagger generator
-│   └── tests/               # Backend and API tests
-├── frontend/                # React + TypeScript dashboard
-│   ├── public/
-│   └── src/
-│       ├── api/             # API client and local scan history
-│       ├── components/      # Reusable interface components
-│       └── pages/           # Scan, history, settings, and help pages
-├── extension/               # Chrome Manifest V3 extension
-├── src/
-│   ├── ml/                  # Training, evaluation, and prediction pipeline
-│   └── url_analysis/        # Runtime URL and sender feature extraction
-├── models/                  # Final model and preprocessing artifacts
-├── data/                    # Raw, processed, and engineered datasets
-├── notebooks/               # Data preparation and EDA notebooks
-├── docs/images/             # Project documentation assets
-├── pytest.ini               # Test discovery configuration
-└── requirements.txt         # Full data/ML development dependencies
-```
-
----
-
-## Quick Start
-
-### Prerequisites
-
-- Python `3.11+`
-- Node.js `20.19+`
-- npm
-- Google Chrome, only if you want to test the extension
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/sic-graduation-project/phishing-email-detector.git
-cd phishing-email-detector
-```
-
-### 2. Install Backend Dependencies
-
-```bash
-python -m pip install -r backend/requirements.txt
-```
-
-### 3. Start the Backend
-
-Open the first terminal:
-
-```bash
-cd backend
-python -m uvicorn app.main:app --reload --port 8000
-```
-
-The API will be available at:
-
-- API base URL: `http://localhost:8000`
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-
-### 4. Start the Frontend
-
-Open a second terminal from the repository root:
-
-```bash
+```powershell
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 
-> On Windows PowerShell, use `npm.cmd install` and `npm.cmd run dev` if script execution policy blocks `npm.ps1`.
+For deployment, set `VITE_API_BASE_URL` to the public backend origin before
+building the frontend, and set backend `CORS_ORIGINS` to the public frontend
+origin (multiple origins are comma-separated). The browser extension also needs
+its `API_BASE_URL`, `NEXUS_APP_URL`, and `manifest.json` host permissions updated
+from localhost to the deployed origins.
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+The extension now defaults to the live API. Demo fixtures must never be enabled
+in a production package.
+# phishing-email-detector
+AI-powered phishing email detection system developed by Nexus Team for the Samsung Innovation Campus Graduation Project.
 
----
+# SIC Capstone Project
 
-## Chrome Extension
+An AI-based project developed as part of the **Samsung Innovation Campus (SIC) Capstone Project**.
 
-Keep both the backend and frontend running, then:
+The project is developed collaboratively by a six-member team, with each member responsible for a specific technical module.
 
-1. Open `chrome://extensions/` in Google Chrome.
-2. Enable **Developer mode**.
-3. Select **Load unpacked**.
-4. Choose the repository's `extension` folder.
-5. Pin **Nexus** from Chrome's extensions menu.
-
-You can now:
-
-- Select text on any regular web page, right-click, and choose **Nexus → Scan Text with Nexus**.
-- Right-click a link and choose **Nexus → Scan URL with Nexus**.
-- Open the extension popup to check backend availability or launch the full dashboard.
-
-After changing extension files, return to `chrome://extensions/` and click the reload button on the Nexus card.
+The repository follows a structured Git workflow where every major project module has its own dedicated feature branch. All completed work is reviewed and integrated into the stable `main` branch through Pull Requests.
 
 ---
 
-## API Reference
+## Project Overview
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| `GET` | `/api/v1/health` | Check whether the backend is available. |
-| `POST` | `/api/v1/analyze/email` | Analyze an email sender, subject, and body. |
-| `POST` | `/api/v1/analyze/url` | Analyze a standalone URL using URL-specific indicators. |
-| `POST` | `/api/v1/analyze/text` | Analyze plain text using the NLP/ML pipeline. |
+The system is designed around multiple AI and software engineering components, including:
 
-### Example Email Request
+- Dataset preparation and preprocessing
+- Natural Language Processing (NLP)
+- Machine Learning
+- URL and Email Header Analysis
+- Backend and API development
+- Frontend and Dashboard development
 
-```json
-{
-  "sender": "Security Team <alerts@example.com>",
-  "subject": "Urgent: Verify your account",
-  "body": "Your account is suspended. Verify it at http://192.168.1.10/login"
-}
+Each component is developed independently before being integrated into the final system.
+
+---
+
+## Team Responsibilities
+
+| Team Member | Responsibility | Branch |
+|---|---|---|
+| Eng. Heba | Dataset & Data Preprocessing | `feature/data-preprocessing` |
+| Eng. Buthaina | NLP & Text Features | `feature/nlp` |
+| Eng. Suliman | Machine Learning | `feature/ml` |
+| Eng. Rayan | URL & Email Header Analysis | `feature/url-analysis` |
+| Eng. Anas | Backend & API | `feature/backend` |
+| Eng. Amal | Frontend & Dashboard | `feature/frontend` |
+
+---
+
+## Branch Structure
+
+The repository contains one main integration branch and six dedicated feature branches.
+
+```text
+main
+│
+├── feature/data-preprocessing
+│
+├── feature/nlp
+│
+├── feature/ml
+│
+├── feature/url-analysis
+│
+├── feature/backend
+│
+└── feature/frontend
 ```
 
-### Example Response
+### `main`
 
-```json
-{
-  "input_type": "email",
-  "classification": "Phishing",
-  "risk_score": 65.95,
-  "reasons": [
-    "URL contains an IP address",
-    "URL contains suspicious words",
-    "Sender domain differs from URL domain",
-    "URL uses HTTP instead of HTTPS"
-  ]
-}
-```
+The `main` branch represents the stable and integrated version of the project.
 
-For full schemas, examples, and validation responses, open Swagger UI after starting the backend or read [backend/API_DOCUMENTATION.md](backend/API_DOCUMENTATION.md).
+Direct development on `main` should be avoided.
+
+Completed work from feature branches must be integrated into `main` through a **Pull Request** after review.
 
 ---
 
-## Configuration
+## Project Workflow Overview
+
+<p align="center">
+  <img src="docs/images/project-workflow.jpg" alt="Nexus Project Structure, Branches and Git Workflow" width="750">
+</p>
+
+<p align="center">
+  <em>Visual overview of the project structure, team branches, and Git collaboration workflow.</em>
+</p>
+
+---
+
+# Project Modules
+
+## 1. Dataset & Data Preprocessing
+
+**Responsible:** Eng. Heba
+**Branch:** `feature/data-preprocessing`
+
+This module is responsible for preparing the dataset before it is used by the AI and Machine Learning components.
+
+Main responsibilities include:
+
+- Dataset collection and organization
+- Data inspection
+- Data cleaning
+- Handling missing or invalid values
+- Removing unnecessary or duplicate records
+- Data transformation
+- Label preparation
+- Dataset balancing when required
+- Preparing training and testing datasets
+- Exporting cleaned data for other modules
+
+The output of this module should provide a clean and reliable dataset that can be consumed by the NLP and Machine Learning modules.
+
+---
+
+## 2. NLP & Text Features
+
+**Responsible:** Eng. Buthaina
+**Branch:** `feature/nlp`
+
+This module is responsible for processing textual content and extracting useful features from text.
+
+Main responsibilities include:
+
+- Text cleaning
+- Text normalization
+- Tokenization
+- Removing unnecessary characters
+- Handling stop words when appropriate
+- Text feature extraction
+- Keyword analysis
+- Statistical text features
+- Preparing text features for Machine Learning
+- Converting textual information into model-compatible representations
+
+The extracted NLP features will later be combined with other features and used by the Machine Learning module.
+
+---
+
+## 3. Machine Learning
+
+**Responsible:** Eng. Sulaiman
+**Branch:** `feature/ml`
+
+This module is responsible for building, training, evaluating, and selecting the Machine Learning model.
+
+Main responsibilities include:
+
+- Loading prepared features
+- Splitting data into training and testing sets
+- Training Machine Learning models
+- Comparing multiple algorithms
+- Hyperparameter tuning when required
+- Evaluating model performance
+- Measuring classification metrics
+- Selecting the best-performing model
+- Saving the trained model
+- Preparing the prediction pipeline
+- Providing model outputs for backend integration
+
+Important evaluation metrics may include:
+
+- Accuracy
+- Precision
+- Recall
+- F1-Score
+- Confusion Matrix
+- ROC-AUC when applicable
+
+Model performance should be evaluated carefully, especially when working with imbalanced datasets.
+
+---
+
+## 4. URL & Email Header Analysis
+
+**Responsible:** Eng. Rayan
+**Branch:** `feature/url-analysis`
+
+This module is responsible for extracting and analyzing technical features related to URLs and email metadata.
+
+Main responsibilities include:
+
+- URL extraction
+- URL structure analysis
+- Domain analysis
+- URL length analysis
+- Suspicious character detection
+- IP-based URL detection
+- Subdomain analysis
+- Protocol analysis
+- Email header parsing
+- Sender information extraction
+- Email metadata analysis
+- Extraction of useful technical features
+
+The extracted features should be transformed into a structured format that can be used by the Machine Learning model.
+
+---
+
+## 5. Backend & API
+
+**Responsible:** Eng. Anas
+**Branch:** `feature/backend`
+
+This module is responsible for integrating the different system components and exposing their functionality through a backend API.
+
+Main responsibilities include:
+
+- Backend architecture
+- API development
+- Request validation
+- Input processing
+- Integration with the trained Machine Learning model
+- Integration with NLP features
+- Integration with URL analysis
+- Prediction processing
+- Response formatting
+- Error handling
+- API documentation
+- Communication with the frontend
+- System integration
+
+The backend acts as the main communication layer between the AI components and the user interface.
+
+Example architecture:
+
+```text
+Frontend / Dashboard
+        │
+        ▼
+     Backend API
+        │
+        ├── NLP Module
+        │
+        ├── URL Analysis Module
+        │
+        └── Machine Learning Model
+        │
+        ▼
+ Prediction Result
+```
+
+---
+
+## 6. Frontend & Dashboard
+
+**Responsible:** Eng. Amal
+**Branch:** `feature/frontend`
+
+This module is responsible for building the user interface and presenting system results clearly.
+
+Main responsibilities include:
+
+- Dashboard development
+- User interface design
+- Backend API integration
+- Input forms
+- Analysis result presentation
+- Prediction visualization
+- Statistics display
+- Charts and graphs
+- Loading and error states
+- Responsive interface
+- Improving user experience
+
+The frontend should communicate with the backend through the defined API endpoints rather than directly accessing Machine Learning components.
+
+---
+
+# Git Development Workflow
+
+Each team member has a dedicated branch.
+
+Development should be performed only inside the branch assigned to that member.
+
+The basic workflow is:
+
+```text
+Feature Branch
+      │
+      │ Development
+      ▼
+   Commit
+      │
+      ▼
+    Push
+      │
+      ▼
+Pull Request
+      │
+      ▼
+    Review
+      │
+      ▼
+     main
+```
+
+---
+
+## Getting the Repository
+
+Clone the repository:
+
+```bash
+git clone <repository-url>
+```
+
+Enter the project directory:
+
+```bash
+cd <repository-name>
+```
+
+Fetch all remote branches:
+
+```bash
+git fetch origin
+```
+
+---
+
+## Switching to Your Branch
+
+Each team member must switch to their assigned branch before starting development.
+
+### Dataset & Data Preprocessing
+
+```bash
+git checkout feature/data-preprocessing
+```
+
+### NLP
+
+```bash
+git checkout feature/nlp
+```
+
+### Machine Learning
+
+```bash
+git checkout feature/ml
+```
+
+### URL Analysis
+
+```bash
+git checkout feature/url-analysis
+```
 
 ### Backend
 
-Copy `backend/.env.example` to `backend/.env` when custom configuration is needed:
-
-| Variable | Default | Description |
-| --- | --- | --- |
-| `APP_NAME` | `Phishing Email Detector API` | Service name shown in API metadata. |
-| `APP_VERSION` | `1.0.0` | API version displayed by the health endpoint. |
-| `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated allowed frontend origins. |
+```bash
+git checkout feature/backend
+```
 
 ### Frontend
 
-Copy `frontend/.env.example` to `frontend/.env` to change the API URL:
-
-```env
-VITE_API_BASE_URL=http://localhost:8000
+```bash
+git checkout feature/frontend
 ```
-
-### Extension
-
-Extension endpoints and mode are configured in `extension/config.js`. If `API_BASE_URL` changes, update `host_permissions` in `extension/manifest.json` as well.
 
 ---
 
-## Testing & Quality Checks
+# Before Starting Work
 
-Run backend tests from the repository root:
+Before starting new development, always make sure your local branch is synchronized with the remote repository.
+
+Example:
 
 ```bash
-python -m pytest -q
+git checkout feature/ml
+git pull origin feature/ml
 ```
 
-Run the end-to-end ML integration check:
+This reduces the possibility of working on an outdated version of the branch.
+
+---
+
+# Saving Your Changes
+
+After completing a logical part of your work, check the modified files:
 
 ```bash
-python src/ml/integration_test.py
+git status
 ```
 
-Build and lint the frontend:
+Add the required files:
 
 ```bash
-cd frontend
-npm run build
-npm run lint
+git add .
 ```
 
-The current integrated test suite covers API health, request validation, email analysis, safe and suspicious URL cases, text analysis, OpenAPI generation, and static Swagger output.
+Create a commit:
+
+```bash
+git commit -m "feat: add initial model training pipeline"
+```
+
+Push the changes:
+
+```bash
+git push origin feature/ml
+```
+
+Replace `feature/ml` with your assigned branch.
 
 ---
 
-## Nexus Team
+# Commit Message Convention
 
-This project was built collaboratively by a six-member team, with each member leading a dedicated technical area.
+Commit messages should be short, descriptive, and explain what was changed.
 
-| Team member | Responsibility | Development branch |
-| --- | --- | --- |
-| **Eng. Heba** | Dataset preparation and preprocessing | `feature/data-preprocessing` |
-| **Eng. Buthaina** | NLP and text feature engineering | `feature/nlp` |
-| **Eng. Suliman** | Machine learning and model evaluation | `feature/ml` |
-| **Eng. Rayan** | URL and sender analysis | `feature/url-analysis` |
-| **Eng. Anas** | Backend, API, and system integration | `feature/backend` |
-| **Eng. Amal** | Frontend and dashboard | `feature/frontend` |
+The recommended format is:
+
+```text
+type: short description
+```
+
+Common commit types:
+
+| Type | Purpose |
+|---|---|
+| `feat` | Add a new feature |
+| `fix` | Fix a bug |
+| `refactor` | Improve existing code without changing functionality |
+| `docs` | Documentation changes |
+| `test` | Add or modify tests |
+| `data` | Dataset-related changes |
+| `model` | Machine Learning model changes |
+| `chore` | Maintenance or configuration changes |
+
+Examples:
+
+```bash
+git commit -m "data: clean missing dataset values"
+```
+
+```bash
+git commit -m "feat: add text preprocessing pipeline"
+```
+
+```bash
+git commit -m "model: train random forest classifier"
+```
+
+```bash
+git commit -m "feat: add URL feature extraction"
+```
+
+```bash
+git commit -m "feat: create prediction API endpoint"
+```
+
+```bash
+git commit -m "feat: create dashboard results page"
+```
+
+```bash
+git commit -m "fix: handle invalid API requests"
+```
+
+```bash
+git commit -m "docs: update project documentation"
+```
 
 ---
 
-## Responsible Use
+# Pull Request Workflow
 
-- Do not treat Nexus as the only security control protecting an account or organization.
-- Never open or visit a suspicious URL merely to test it.
-- Do not submit private, confidential, or regulated information to an untrusted deployment.
-- Keep model artifacts and preprocessing files version-compatible.
-- Retrain and evaluate the system as phishing techniques and datasets evolve.
+When a feature or important development stage is ready, create a **Pull Request** from your feature branch into:
+
+```text
+main
+```
+
+Example:
+
+```text
+feature/ml
+    │
+    ▼
+Pull Request
+    │
+    ▼
+main
+```
+
+The Pull Request should clearly explain:
+
+1. What was implemented
+2. What files or modules were changed
+3. How the implementation was tested
+4. Whether another module is affected
+5. Any known limitations or pending work
 
 ---
 
-## License & Rights
+# Branch Rules
 
-Copyright © 2026 **Nexus Team — Samsung Innovation Campus Capstone Project**.
+To keep the project stable and prevent conflicts, all team members should follow these rules.
 
-All rights are reserved by the project team. This repository is provided for academic evaluation, demonstration, and authorized team collaboration. No permission is granted to copy, redistribute, publish, sell, sublicense, or commercially use the project, its source code, trained models, datasets, branding, or documentation without prior written approval from the rights holders.
+### Rule 1 — Do Not Develop Directly on `main`
 
-Third-party libraries, frameworks, datasets, and trademarks remain subject to their respective licenses and ownership terms.
+Do not implement features directly inside:
+
+```text
+main
+```
+
+All development must happen in the appropriate feature branch.
 
 ---
 
-<div align="center">
+### Rule 2 — Use Your Assigned Branch
 
-### Detect. Protect. Stay Safe.
+Each member should primarily work inside their assigned branch.
 
-Built by the **Nexus Team** for the **Samsung Innovation Campus Graduation Project**.
+Example:
 
-[Back to top](#nexus--ai-phishing-detector)
+```text
+Eng. Heba
+└── feature/data-preprocessing
 
-</div>
+Eng. Buthaina
+└── feature/nlp
+
+Eng. Sulaiman
+└── feature/ml
+
+Eng. Rayan
+└── feature/url-analysis
+
+Eng. Anas
+└── feature/backend
+
+Eng. Amal
+└── feature/frontend
+```
+
+---
+
+### Rule 3 — Do Not Modify Another Member's Branch Without Coordination
+
+If work from another module is required, coordinate with the member responsible for that module first.
+
+Avoid directly changing another member's branch unless it has been discussed and agreed upon.
+
+---
+
+### Rule 4 — Pull Before Starting
+
+Always pull the latest branch changes before starting new work.
+
+```bash
+git pull origin <branch-name>
+```
+
+---
+
+### Rule 5 — Push Regularly
+
+Do not keep important work only on your local computer.
+
+Push completed and stable development stages to GitHub regularly.
+
+---
+
+### Rule 6 — Keep Commits Focused
+
+Each commit should represent one logical change.
+
+Avoid mixing unrelated changes into one large commit.
+
+Good:
+
+```text
+feat: add URL length feature
+```
+
+Better than:
+
+```text
+update project
+```
+
+---
+
+### Rule 7 — Use Pull Requests
+
+Feature branches should be integrated into `main` through Pull Requests.
+
+This provides:
+
+- Code review
+- Change tracking
+- Conflict detection
+- Better project history
+- Safer integration
+
+---
+
+# Integration Between Modules
+
+Although each module is developed separately, the final system depends on communication between several components.
+
+Expected integration flow:
+
+```text
+Dataset
+   │
+   ▼
+Data Preprocessing
+   │
+   ├───────────────┐
+   ▼               ▼
+NLP Features    URL/Header Features
+   │               │
+   └───────┬───────┘
+           ▼
+     Feature Dataset
+           │
+           ▼
+   Machine Learning
+           │
+           ▼
+      Trained Model
+           │
+           ▼
+       Backend API
+           │
+           ▼
+ Frontend / Dashboard
+```
+
+Because modules depend on each other, changes to shared data structures, feature names, API formats, or model inputs should be communicated with the team before implementation.
+
+---
+
+# Module Contracts
+
+To simplify integration, modules should exchange structured and predictable outputs.
+
+For example:
+
+```text
+Data Preprocessing
+        ↓
+Clean Dataset
+
+NLP
+        ↓
+Text Features
+
+URL Analysis
+        ↓
+URL/Header Features
+
+Machine Learning
+        ↓
+Prediction Model
+
+Backend
+        ↓
+API Response
+
+Frontend
+        ↓
+User Visualization
+```
+
+Changes to module outputs should be documented and communicated to dependent modules.
+
+---
+
+# Recommended Repository Structure
+
+As the project grows, the repository may follow a structure similar to:
+
+```text
+project-root/
+│
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   └── README.md
+│
+├── preprocessing/
+│
+├── nlp/
+│
+├── url_analysis/
+│
+├── ml/
+│
+├── backend/
+│
+├── frontend/
+│
+├── notebooks/
+│
+├── tests/
+│
+├── docs/
+│
+├── requirements.txt
+│
+├── .gitignore
+│
+└── README.md
+```
+
+This structure may evolve as the project architecture becomes more stable.
+
+---
+
+# Collaboration Guidelines
+
+Good communication is required whenever a change affects more than one module.
+
+Examples include:
+
+- Changing dataset column names
+- Adding or removing Machine Learning features
+- Changing model input structure
+- Changing model output format
+- Changing API request fields
+- Changing API response structure
+- Changing frontend/backend contracts
+
+Before introducing breaking changes, inform the team member responsible for the affected module.
+
+---
+
+# Code Quality
+
+All contributors should aim to keep the project:
+
+- Modular
+- Readable
+- Maintainable
+- Reusable
+- Testable
+- Clearly documented
+
+Avoid unnecessary duplication and keep module responsibilities separated.
+
+---
+
+# Documentation
+
+Important technical decisions should be documented inside the repository.
+
+Documentation may include:
+
+```text
+docs/
+├── architecture.md
+├── dataset.md
+├── model.md
+├── api.md
+└── integration.md
+```
+
+Documentation files can be introduced gradually as the project develops.
+
+---
+
+# Security
+
+Do not commit sensitive information to GitHub.
+
+Never commit files containing:
+
+- Passwords
+- API keys
+- Access tokens
+- Private credentials
+- Environment secrets
+- Personal sensitive information
+
+Environment variables should be stored in local configuration files such as:
+
+```text
+.env
+```
+
+The `.env` file must be excluded using:
+
+```text
+.gitignore
+```
+
+Example:
+
+```gitignore
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+```
+
+---
+
+# Large Files and Datasets
+
+Large datasets, trained models, generated artifacts, or unnecessary binary files should not automatically be committed to the repository.
+
+Before uploading large files, coordinate with the team and determine the appropriate storage strategy.
+
+This helps keep the Git repository lightweight and manageable.
+
+---
+
+# Conflict Resolution
+
+If Git reports a merge conflict:
+
+1. Do not randomly delete conflicting code.
+2. Identify which modules are affected.
+3. Contact the responsible team member if necessary.
+4. Review both versions of the conflicting code.
+5. Resolve the conflict carefully.
+6. Test the project after resolution.
+7. Commit the resolved changes.
+
+For complex conflicts involving shared functionality, resolve them collaboratively.
+
+---
+
+# Project Development Principles
+
+The team follows these core principles:
+
+```text
+Independent Development
+        +
+Clear Responsibilities
+        +
+Controlled Integration
+        +
+Code Review
+        +
+Documentation
+        =
+Stable Project
+```
+
+The objective of the branching strategy is not only to separate development work, but also to make collaboration, integration, and project tracking easier throughout the Capstone Project.
+
+---
+
+## Team
+
+**Samsung Innovation Campus — SIC Capstone Team**
+
+| Member | Area |
+|---|---|
+| Eng. Heba | Dataset & Data Preprocessing |
+| Eng. Buthaina | NLP & Text Features |
+| Eng. Sulaiman | Machine Learning |
+| Eng. Rayan | URL & Email Header Analysis |
+| Eng. Anas | Backend & API |
+| Eng. Amal | Frontend & Dashboard |
+
+---
+
+## Repository Policy
+
+```text
+Stable Code        → main
+Data Work          → feature/data-preprocessing
+NLP Work           → feature/nlp
+ML Work            → feature/ml
+URL Analysis       → feature/url-analysis
+Backend Work       → feature/backend
+Frontend Work      → feature/frontend
+```
+
+**All team members are responsible for keeping their branches organized, synchronized, and ready for integration.**
+
+---
+
+## License
+
+This repository is developed for the **Samsung Innovation Campus Capstone Project**.
+
+Project usage, distribution, and licensing terms may be defined by the team as the project progresses.
+
+---
+
+## Copyright
+
+© 2026 SIC Capstone Team. All Rights Reserved.
+
+All rights to this project are collectively reserved to all members of the team.

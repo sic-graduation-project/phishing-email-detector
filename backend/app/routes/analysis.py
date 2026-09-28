@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, status
 
-from app.schemas.analysis import (
+from ..schemas.analysis import (
     AnalysisResponse,
     EmailAnalysisRequest,
     ErrorResponse,
@@ -10,7 +10,7 @@ from app.schemas.analysis import (
     URLAnalysisRequest,
     ValidationErrorResponse,
 )
-from app.services.analysis_service import analyze_email, analyze_text, analyze_url
+from ..services.analysis_service import analyze_email, analyze_text, analyze_url
 
 router = APIRouter(prefix="/api/v1/analyze")
 

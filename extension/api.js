@@ -89,23 +89,23 @@ export async function analyzeContent(kind, content) {
   return parseAnalysis(data);
 }
 
-// Checks the shape of the backend response. It does not interpret or change it.
-// Any non-empty classification is accepted, so classifications other than
-// "Phishing" / "Legitimate" are shown as the backend sent them.
+// Fail closed on malformed backend data instead of rendering an unknown verdict
+// with safe-looking styling.
 function parseAnalysis(data) {
   if (!data || typeof data !== "object") throw new ScanError("invalidResponse");
 
   const { classification, risk_score: riskScore, reasons } = data;
-  if (typeof classification !== "string" || classification.trim() === "") {
+  if (classification !== "Phishing" && classification !== "Legitimate") {
+    throw new ScanError("invalidResponse");
+  }
+  if (!Number.isFinite(riskScore) || riskScore < 0 || riskScore > 100 || !Array.isArray(reasons)) {
     throw new ScanError("invalidResponse");
   }
 
   return {
     classification: classification.trim(),
-    riskScore: Number.isFinite(riskScore) && riskScore >= 0 && riskScore <= 100 ? riskScore : null,
-    reasons: Array.isArray(reasons)
-      ? reasons.filter((reason) => typeof reason === "string" && reason.trim() !== "")
-      : [],
+    riskScore,
+    reasons: reasons.filter((reason) => typeof reason === "string" && reason.trim() !== ""),
   };
 }
 
