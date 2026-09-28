@@ -10,6 +10,11 @@ import type { DashboardStats, ScanResult } from "../types";
 
 const STORAGE_KEY = "phishguard.scan_history";
 const MAX_HISTORY = 200;
+export const HISTORY_CHANGED_EVENT = "phishguard:history-changed";
+
+function notifyHistoryChanged(): void {
+  window.dispatchEvent(new Event(HISTORY_CHANGED_EVENT));
+}
 
 export function getLocalHistory(): ScanResult[] {
   try {
@@ -24,6 +29,7 @@ export function saveScanToHistory(result: ScanResult): ScanResult[] {
   const history = [result, ...getLocalHistory()].slice(0, MAX_HISTORY);
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    notifyHistoryChanged();
   } catch {
     // storage unavailable (private browsing, quota) — history just won't persist
   }
@@ -33,6 +39,7 @@ export function saveScanToHistory(result: ScanResult): ScanResult[] {
 export function clearHistory(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
+    notifyHistoryChanged();
   } catch {
     // ignore
   }
