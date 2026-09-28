@@ -1,39 +1,22 @@
+"""Build leakage-safe feature matrices without publishing artifacts."""
+
+from __future__ import annotations
+
 from pathlib import Path
 
-import joblib
 import numpy as np
-
 from scipy.sparse import csr_matrix, hstack
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.preprocessing import MaxAbsScaler
 
-from feature_builder import (
-    URL_SENDER_FEATURES,
-    build_feature_dataset,
-)
-
-from nlp_feature_builder import (
-    NLP_NUMERIC_FEATURES,
-    build_nlp_features,
-)
-
-
-# ============================================================
-# Configuration
-# ============================================================
+from feature_builder import PRODUCTION_URL_FEATURES, build_feature_dataset
+from nlp_feature_builder import NLP_NUMERIC_FEATURES, build_nlp_features
 
 RANDOM_STATE = 42
-TEST_SIZE = 0.30
-
+N_SPLITS = 10
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-MODELS_DIR = PROJECT_ROOT / "models"
 
-
-# ============================================================
-# TF-IDF configuration
-# Same final configuration used by the NLP component
-# ============================================================
 
 def create_tfidf_vectorizer() -> TfidfVectorizer:
     return TfidfVectorizer(
@@ -45,278 +28,92 @@ def create_tfidf_vectorizer() -> TfidfVectorizer:
     )
 
 
-# ============================================================
-# Build combined dataset
-# ============================================================
-
 def build_combined_dataset():
-    print("=" * 60)
-    print("BUILDING COMBINED ML DATASET")
-    print("=" * 60)
-
-    # Cleaned dataset + Ryan's 15 ML features
     base_df = build_feature_dataset()
-
-    print(f"Base + URL/Sender rows: {len(base_df):,}")
-
-    # Buthaina's NLP feature logic, preserving email_id
     nlp_df = build_nlp_features(base_df)
-
-    nlp_columns = [
-        "email_id",
-        "clean_body",
-        *NLP_NUMERIC_FEATURES,
-    ]
-
+    nlp_columns = ["email_id", "clean_body", *NLP_NUMERIC_FEATURES]
     combined_df = base_df.merge(
-        nlp_df[nlp_columns],
-        on="email_id",
-        how="inner",
-        validate="one_to_one",
+        nlp_df[nlp_columns], on="email_id", how="inner", validate="one_to_one"
     )
-
-    if len(combined_df) != len(base_df):
-        raise ValueError(
-            "NLP merge changed the number of dataset rows."
-        )
-
-    if combined_df["email_id"].duplicated().any():
-        raise ValueError(
-            "Duplicate email_id detected after NLP merge."
-        )
-
+    if len(combined_df) != len(base_df) or combined_df["email_id"].duplicated().any():
+        raise ValueError("NLP merge changed or duplicated dataset rows.")
     return combined_df
 
 
-# ============================================================
-# Prepare train/test features
-# ============================================================
+def normalized_sender_groups(df):
+    groups = df["sender"].fillna("").astype(str).str.strip().str.lower()
+    empty = groups.eq("")
+    groups.loc[empty] = "missing_sender_" + df.loc[empty, "email_id"].astype(str)
+    return groups
+
+
+def split_development_data(df):
+    """Create sender-disjoint 60/10/10/20 train/calibration/validation/test sets."""
+    groups = normalized_sender_groups(df)
+    splitter = StratifiedGroupKFold(
+        n_splits=N_SPLITS, shuffle=True, random_state=RANDOM_STATE
+    )
+    fold_for_row = np.full(len(df), -1, dtype=int)
+    for fold, (_, fold_idx) in enumerate(splitter.split(df, df["label"], groups)):
+        fold_for_row[fold_idx] = fold
+    if (fold_for_row < 0).any():
+        raise ValueError("Some rows were not assigned to a data partition.")
+
+    masks = {
+        "test": np.isin(fold_for_row, [0, 1]),
+        "calibration": fold_for_row == 2,
+        "validation": fold_for_row == 3,
+        "train": fold_for_row >= 4,
+    }
+    partitions = {name: df.loc[mask].copy() for name, mask in masks.items()}
+    group_sets = {name: set(groups.loc[frame.index]) for name, frame in partitions.items()}
+    names = list(group_sets)
+    for index, left in enumerate(names):
+        for right in names[index + 1 :]:
+            if group_sets[left] & group_sets[right]:
+                raise ValueError(f"Sender leakage between {left} and {right} partitions.")
+    for name, frame in partitions.items():
+        if set(frame["label"].unique()) != {0, 1}:
+            raise ValueError(f"Partition {name} does not contain both labels.")
+    return partitions
+
+
+def _combine(text_matrix, numeric_matrix):
+    return hstack([text_matrix, csr_matrix(numeric_matrix)]).tocsr()
+
 
 def prepare_features():
     df = build_combined_dataset()
-
-    print("\n" + "=" * 60)
-    print("TRAIN / TEST SPLIT")
-    print("=" * 60)
-
-    # --------------------------------------------------------
-    # 70% training / 30% testing
-    # Stratified to preserve label distribution
-    # --------------------------------------------------------
-
-    train_df, test_df = train_test_split(
-        df,
-        test_size=TEST_SIZE,
-        random_state=RANDOM_STATE,
-        stratify=df["label"],
-    )
-
-    print(f"Training rows: {len(train_df):,}")
-    print(f"Testing rows:  {len(test_df):,}")
-
-    print("\nTraining label distribution:")
-    print(train_df["label"].value_counts().sort_index())
-
-    print("\nTesting label distribution:")
-    print(test_df["label"].value_counts().sort_index())
-
-    # --------------------------------------------------------
-    # TF-IDF
-    #
-    # IMPORTANT:
-    # fit ONLY on training data.
-    # This prevents information leakage from the test set.
-    # --------------------------------------------------------
-
-    print("\n" + "=" * 60)
-    print("TF-IDF")
-    print("=" * 60)
+    frames = split_development_data(df)
+    numeric_features = PRODUCTION_URL_FEATURES + NLP_NUMERIC_FEATURES
 
     tfidf = create_tfidf_vectorizer()
-
-    print("Fitting TF-IDF on training data...")
-
-    X_train_tfidf = tfidf.fit_transform(
-        train_df["clean_body"]
-    )
-
-    print("Transforming testing data...")
-
-    X_test_tfidf = tfidf.transform(
-        test_df["clean_body"]
-    )
-
-    print(
-        f"TF-IDF vocabulary size: "
-        f"{len(tfidf.vocabulary_):,}"
-    )
-
-    print(
-        f"Training TF-IDF shape: "
-        f"{X_train_tfidf.shape}"
-    )
-
-    print(
-        f"Testing TF-IDF shape: "
-        f"{X_test_tfidf.shape}"
-    )
-
-    # --------------------------------------------------------
-    # Numeric features
-    # 15 URL/Sender + 8 NLP = 23 features
-    # --------------------------------------------------------
-
-    numeric_features = (
-        URL_SENDER_FEATURES
-        + NLP_NUMERIC_FEATURES
-    )
-
-    print("\n" + "=" * 60)
-    print("NUMERIC FEATURES")
-    print("=" * 60)
-
-    print(
-        f"URL/Sender features: "
-        f"{len(URL_SENDER_FEATURES)}"
-    )
-
-    print(
-        f"NLP numeric features: "
-        f"{len(NLP_NUMERIC_FEATURES)}"
-    )
-
-    print(
-        f"Total numeric features: "
-        f"{len(numeric_features)}"
-    )
-
-    X_train_numeric_raw = train_df[
-        numeric_features
-    ].astype(float)
-
-    X_test_numeric_raw = test_df[
-        numeric_features
-    ].astype(float)
-
-    # --------------------------------------------------------
-    # Scale numeric features.
-    #
-    # Fit scaler on TRAINING data only.
-    # MaxAbsScaler keeps zero values and works well with
-    # sparse/high-dimensional ML pipelines.
-    # --------------------------------------------------------
-
     scaler = MaxAbsScaler()
+    tfidf.fit(frames["train"]["clean_body"])
+    scaler.fit(frames["train"][numeric_features].astype(float))
 
-    X_train_numeric = scaler.fit_transform(
-        X_train_numeric_raw
-    )
-
-    X_test_numeric = scaler.transform(
-        X_test_numeric_raw
-    )
-
-    X_train_numeric = csr_matrix(
-        X_train_numeric
-    )
-
-    X_test_numeric = csr_matrix(
-        X_test_numeric
-    )
-
-    # --------------------------------------------------------
-    # Combine TF-IDF + numeric features
-    # --------------------------------------------------------
-
-    X_train = hstack(
-        [
-            X_train_tfidf,
-            X_train_numeric,
-        ]
-    ).tocsr()
-
-    X_test = hstack(
-        [
-            X_test_tfidf,
-            X_test_numeric,
-        ]
-    ).tocsr()
-
-    y_train = train_df["label"].to_numpy()
-    y_test = test_df["label"].to_numpy()
-
-    print("\n" + "=" * 60)
-    print("FINAL ML MATRICES")
-    print("=" * 60)
-
-    print(f"X_train: {X_train.shape}")
-    print(f"X_test:  {X_test.shape}")
-
-    print(f"y_train: {y_train.shape}")
-    print(f"y_test:  {y_test.shape}")
-
-    expected_features = (
-        X_train_tfidf.shape[1]
-        + len(numeric_features)
-    )
-
-    if X_train.shape[1] != expected_features:
-        raise ValueError(
-            "Unexpected final training feature count."
-        )
-
-    if X_test.shape[1] != expected_features:
-        raise ValueError(
-            "Unexpected final testing feature count."
-        )
-
-    # --------------------------------------------------------
-    # Save preprocessing objects required later by backend
-    # --------------------------------------------------------
-
-    MODELS_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    joblib.dump(
-        tfidf,
-        MODELS_DIR / "tfidf_vectorizer.pkl",
-    )
-
-    joblib.dump(
-        scaler,
-        MODELS_DIR / "numeric_scaler.pkl",
-    )
-
-    joblib.dump(
-        numeric_features,
-        MODELS_DIR / "numeric_feature_names.pkl",
-    )
-
-    print("\nPreprocessing objects saved to:")
-    print(MODELS_DIR)
-
-    print(
-        "\nFeature preparation completed successfully."
-    )
-
-    return {
-        "X_train": X_train,
-        "X_test": X_test,
-        "y_train": y_train,
-        "y_test": y_test,
-        "train_df": train_df,
-        "test_df": test_df,
+    result = {
         "tfidf": tfidf,
         "scaler": scaler,
         "numeric_features": numeric_features,
+        "frames": frames,
     }
+    expected_features = len(tfidf.vocabulary_) + len(numeric_features)
+    for name, frame in frames.items():
+        text = tfidf.transform(frame["clean_body"])
+        numeric = scaler.transform(frame[numeric_features].astype(float))
+        matrix = _combine(text, numeric)
+        if matrix.shape[1] != expected_features:
+            raise ValueError(f"Unexpected feature count in {name} partition.")
+        result[f"X_{name}"] = matrix
+        result[f"y_{name}"] = frame["label"].to_numpy()
 
+    print("Sender-disjoint data partitions:")
+    for name, frame in frames.items():
+        print(f"  {name:11} rows={len(frame):6,} phishing_rate={frame['label'].mean():.3f}")
+    print(f"Final feature count: {expected_features:,}")
+    return result
 
-# ============================================================
-# Run validation
-# ============================================================
 
 if __name__ == "__main__":
     prepare_features()

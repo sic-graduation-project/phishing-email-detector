@@ -1,18 +1,22 @@
 # Backend
 fastapi
 uvicorn
+httpx
 
 # Data Processing
-pandas
-numpy
+pandas==3.0.3
+numpy==2.4.6
 
 # Machine Learning
-scikit-learn
-joblib
+scikit-learn==1.9.1
+joblib==1.5.3
+scipy==1.18.0
 
 # NLP
 nltk
+contractions==0.1.73
 
 # Utilities
 python-dotenv
-tldextract
+tldextract==5.3.2
+pytest

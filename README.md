@@ -1,5 +1,29 @@
 # phishing-email-detector
 AI-powered phishing email detection system developed by Nexus Team for the Samsung Innovation Campus Graduation Project.
+
+## Run the integrated application
+
+```powershell
+python -m pip install -r requirements.txt
+python -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+```
+
+In a second terminal:
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+For deployment, set `VITE_API_BASE_URL` to the public backend origin before
+building the frontend, and set backend `CORS_ORIGINS` to the public frontend
+origin (multiple origins are comma-separated). The browser extension also needs
+its `API_BASE_URL`, `NEXUS_APP_URL`, and `manifest.json` host permissions updated
+from localhost to the deployed origins.
+
+The extension now defaults to the live API. Demo fixtures must never be enabled
+in a production package.
 # phishing-email-detector
 AI-powered phishing email detection system developed by Nexus Team for the Samsung Innovation Campus Graduation Project.
 

@@ -29,6 +29,22 @@ interface ApiErrorBody {
   detail?: string;
 }
 
+function parseAnalysisResponse(data: AnalysisResponse, requestedKind: InputKind): AnalysisResponse {
+  if (
+    !data ||
+    data.input_type !== requestedKind ||
+    (data.classification !== "Phishing" && data.classification !== "Legitimate") ||
+    !Number.isFinite(data.risk_score) ||
+    data.risk_score < 0 ||
+    data.risk_score > 100 ||
+    !Array.isArray(data.reasons) ||
+    data.reasons.some((reason) => typeof reason !== "string")
+  ) {
+    throw new Error("The analysis service returned an invalid response. Please try again.");
+  }
+  return data;
+}
+
 const ANALYZE_ENDPOINTS: Record<InputKind, string> = {
   email: "/api/v1/analyze/email",
   url: "/api/v1/analyze/url",
@@ -53,12 +69,13 @@ export async function scanEmail(request: ScanRequest): Promise<ScanResult> {
       buildPayload(request)
     );
 
+    const result = parseAnalysisResponse(data, request.kind);
     return {
       id: crypto.randomUUID(),
-      kind: data.input_type,
-      verdict: data.classification === "Phishing" ? "phishing" : "safe",
-      riskScore: data.risk_score,//هنا نسجل النتيجة التي اعطاها الباك
-      reasons: data.reasons,//هنا نسجل الاسباب التي جعلت الباك يقرر ان هذا البريد او الرابط او النص مشبوه
+      kind: result.input_type,
+      verdict: result.classification === "Phishing" ? "phishing" : "safe",
+      riskScore: result.risk_score,//هنا نسجل النتيجة التي اعطاها الباك
+      reasons: result.reasons,//هنا نسجل الاسباب التي جعلت الباك يقرر ان هذا البريد او الرابط او النص مشبوه
       scannedAt: new Date().toISOString(),//هنا نسجل الوقت الذي استلم فيه الفرونت النتيجة من الباك
       subject: request.subject,//هنا نسجل الموضوع الذي ارسله المستخدم في الفرونت
       snippet: request.body.slice(0, 140),

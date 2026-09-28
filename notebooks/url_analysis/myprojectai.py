@@ -6,6 +6,10 @@ import tldextract
 from pathlib import Path
 from urllib.parse import urlparse
 
+# Use tldextract's bundled suffix snapshot. Analysis must not make a network
+# request or wait on a shared cache lock during an API request.
+TLD_EXTRACTOR = tldextract.TLDExtract(suffix_list_urls=(), cache_dir=None)
+
 
 # ==========================================
 # Project Paths
@@ -536,7 +540,7 @@ def GetBaseDomain(domain):
     except ValueError:
         pass
 
-    extracted = tldextract.extract(domain)
+    extracted = TLD_EXTRACTOR(domain)
 
     if not extracted.domain or not extracted.suffix:
         return domain.lower()
