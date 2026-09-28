@@ -106,6 +106,8 @@ export default function ScanPage() {
     const value = (kind === "url" ? urlParam : textParam) as string;
 
     handledQuery.current = query;
+    // This effect intentionally synchronizes component state with an external URL deep link.
+    // oxlint-disable-next-line react/set-state-in-effect
     setInputKind(kind);
     if (kind === "url") setUrl(value);
     else setText(value);
@@ -119,8 +121,8 @@ export default function ScanPage() {
   }, [searchParams, setSearchParams]);
 
   const riskScore = result ? result.riskScore : 0;
-  const riskColor = riskScore >= 70 ? "#ef4444" : riskScore >= 40 ? "#f59e0b" : "#10b981";
-  const riskLabel = riskScore >= 70 ? "High risk" : riskScore >= 40 ? "Medium risk" : "Low risk";
+  const riskColor = result?.verdict === "phishing" ? "#ef4444" : riskScore >= 40 ? "#f59e0b" : "#10b981";
+  const riskLabel = result?.verdict === "phishing" ? "Phishing detected" : riskScore >= 40 ? "Medium risk" : "Low risk";
   const KindIcon = result ? INPUT_TYPES.find((t) => t.kind === result.kind)?.icon ?? FileText : FileText;
 
   return (

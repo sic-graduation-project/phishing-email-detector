@@ -23,8 +23,8 @@
 export const NEXUS_CONFIG = Object.freeze({
   // Production must use the real analyzer. Demo fixtures are opt-in only.
   DEMO_MODE: false,
-  API_BASE_URL: "http://localhost:8000",
-  NEXUS_APP_URL: "http://localhost:5173",
+  API_BASE_URL: "https://nexus-phishing-api.onrender.com",
+  NEXUS_APP_URL: "https://nexus-phishing-detector.onrender.com",
   REQUEST_TIMEOUT_MS: 15000,
   MAX_TEXT_LENGTH: 5000,
   MAX_DEEP_LINK_LENGTH: 8000,

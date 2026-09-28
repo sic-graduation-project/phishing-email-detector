@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -25,12 +25,8 @@ import ConfirmDialog from "../components/ConfirmDialog";
 const PIE_COLORS: Record<string, string> = { Safe: "#10b981", Phishing: "#ef4444" };
 
 export default function DashboardPage() {
-  const [history, setHistory] = useState<ScanResult[]>([]);
+  const [history, setHistory] = useState<ScanResult[]>(getLocalHistory);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
-
-  useEffect(() => {
-    setHistory(getLocalHistory());
-  }, []);
 
   const stats = useMemo(() => computeStats(history), [history]);
 

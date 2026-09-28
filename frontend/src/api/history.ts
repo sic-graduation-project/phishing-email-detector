@@ -11,6 +11,22 @@ import type { DashboardStats, ScanResult } from "../types";
 const STORAGE_KEY = "phishguard.scan_history";
 const MAX_HISTORY = 200;
 export const HISTORY_CHANGED_EVENT = "phishguard:history-changed";
+export const NOTIFICATIONS_CHANGED_EVENT = "phishguard:notifications-changed";
+const NOTIFICATIONS_KEY = "phishguard.notifications_enabled";
+
+function isScanResult(value: unknown): value is ScanResult {
+  if (!value || typeof value !== "object") return false;
+  const scan = value as Partial<ScanResult>;
+  return (
+    typeof scan.id === "string" &&
+    (scan.kind === "email" || scan.kind === "url" || scan.kind === "text") &&
+    (scan.verdict === "safe" || scan.verdict === "phishing") &&
+    typeof scan.riskScore === "number" && Number.isFinite(scan.riskScore) &&
+    Array.isArray(scan.reasons) && scan.reasons.every((reason) => typeof reason === "string") &&
+    typeof scan.scannedAt === "string" && !Number.isNaN(Date.parse(scan.scannedAt)) &&
+    typeof scan.snippet === "string"
+  );
+}
 
 function notifyHistoryChanged(): void {
   window.dispatchEvent(new Event(HISTORY_CHANGED_EVENT));
@@ -19,10 +35,28 @@ function notifyHistoryChanged(): void {
 export function getLocalHistory(): ScanResult[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as ScanResult[]) : [];
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter(isScanResult).slice(0, MAX_HISTORY) : [];
   } catch {
     return [];
   }
+}
+
+export function getNotificationsEnabled(): boolean {
+  try {
+    return localStorage.getItem(NOTIFICATIONS_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
+
+export function setNotificationsEnabled(enabled: boolean): void {
+  try {
+    localStorage.setItem(NOTIFICATIONS_KEY, String(enabled));
+  } catch {
+    // The setting remains active for the current component session.
+  }
+  window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED_EVENT));
 }
 
 export function saveScanToHistory(result: ScanResult): ScanResult[] {

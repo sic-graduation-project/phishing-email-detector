@@ -1,16 +1,23 @@
 import { useState } from "react";
 import { Settings as SettingsIcon, Moon, Bell, Trash2 } from "lucide-react";
 import { useTheme } from "../hooks/useTheme";
-import { clearHistory } from "../api/history";
+import { clearHistory, getNotificationsEnabled, setNotificationsEnabled } from "../api/history";
 import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const [notificationsEnabled, setNotificationsState] = useState(getNotificationsEnabled);
 
   function handleClear() {
     clearHistory();
     setConfirmClearOpen(false);
+  }
+
+  function toggleNotifications() {
+    const next = !notificationsEnabled;
+    setNotificationsState(next);
+    setNotificationsEnabled(next);
   }
 
   return (
@@ -57,12 +64,19 @@ export default function SettingsPage() {
             <div>
               <p className="font-medium text-slate-800 dark:text-slate-100">Notifications</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Get notified when a scan finishes.
+                Show an alert only when a phishing scan is detected.
               </p>
             </div>
           </div>
-          <button className="relative h-6 w-11 rounded-full bg-blue-600">
-            <span className="absolute left-0.5 top-0.5 translate-x-5 h-5 w-5 rounded-full bg-white" />
+          <button
+            type="button"
+            role="switch"
+            aria-checked={notificationsEnabled}
+            aria-label="Toggle phishing notifications"
+            onClick={toggleNotifications}
+            className={`relative h-6 w-11 rounded-full transition-colors ${notificationsEnabled ? "bg-blue-600" : "bg-slate-300"}`}
+          >
+            <span className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${notificationsEnabled ? "translate-x-5" : "translate-x-0"}`} />
           </button>
         </div>
 

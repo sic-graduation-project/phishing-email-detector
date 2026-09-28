@@ -44,6 +44,25 @@ def test_benign_text_stays_legitimate():
     assert response.json()["classification"] == "Legitimate"
 
 
+def test_common_benign_urls_stay_legitimate():
+    for url in ("https://example.com", "https://google.com", "https://github.com/openai", "https://docs.python.org/3/"):
+        result = client.post("/api/v1/analyze/url", json={"url": url}).json()
+        assert result["classification"] == "Legitimate", (url, result)
+        assert result["risk_score"] < 50
+
+
+def test_common_benign_short_messages_stay_legitimate():
+    for text in ("Hello", "Can we meet tomorrow?", "Happy birthday!", "Please review the attached report", "Project status update", "Please confirm attendance"):
+        result = client.post("/api/v1/analyze/text", json={"text": text}).json()
+        assert result["classification"] == "Legitimate", (text, result)
+
+
+def test_reported_suspicious_url_is_flagged():
+    result = client.post("/api/v1/analyze/url", json={"url": "http://secure-login.example.test/update-password"}).json()
+    assert result["classification"] == "Phishing"
+    assert result["risk_score"] >= 65
+
+
 def test_blank_text_and_non_http_url_are_rejected():
     assert client.post("/api/v1/analyze/text", json={"text": "   "}).status_code == 422
     assert client.post("/api/v1/analyze/url", json={"url": "javascript:alert(1)"}).status_code == 422

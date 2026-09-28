@@ -1,11 +1,13 @@
 import os
 from typing import Literal
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 from .analysis_service import analyze, ensure_ready
+from .rate_limit import SlidingWindowLimiter
 
 
 def _cors_origins() -> list[str]:
@@ -20,6 +22,20 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
+_analysis_limiter = SlidingWindowLimiter(int(os.getenv("ANALYSIS_RATE_LIMIT_PER_MINUTE", "60")))
+
+
+@app.middleware("http")
+async def limit_analysis_requests(request: Request, call_next):
+    if request.url.path.startswith("/api/v1/analyze/"):
+        client = request.client.host if request.client else "unknown"
+        if not _analysis_limiter.allow(client):
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many analysis requests. Please try again shortly."},
+                headers={"Retry-After": "60"},
+            )
+    return await call_next(request)
 
 
 class EmailRequest(BaseModel):

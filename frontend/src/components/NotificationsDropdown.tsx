@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, ShieldAlert } from "lucide-react";
-import { getLocalHistory, HISTORY_CHANGED_EVENT } from "../api/history";
+import { getLocalHistory, getNotificationsEnabled, HISTORY_CHANGED_EVENT, NOTIFICATIONS_CHANGED_EVENT } from "../api/history";
 import type { ScanResult } from "../types";
 
 const LAST_READ_KEY = "phishguard.notifications_last_read";
 const MAX_NOTIFICATIONS = 20;
 
 function getNotifications(): ScanResult[] {
+  if (!getNotificationsEnabled()) return [];
   return getLocalHistory()
     .filter((scan) => scan.verdict === "phishing")
     .slice(0, MAX_NOTIFICATIONS);
@@ -63,9 +64,11 @@ export default function NotificationsDropdown() {
       if (event.key === LAST_READ_KEY) setLastRead(getLastRead());
     }
     window.addEventListener(HISTORY_CHANGED_EVENT, refresh);
+    window.addEventListener(NOTIFICATIONS_CHANGED_EVENT, refresh);
     window.addEventListener("storage", handleStorage);
     return () => {
       window.removeEventListener(HISTORY_CHANGED_EVENT, refresh);
+      window.removeEventListener(NOTIFICATIONS_CHANGED_EVENT, refresh);
       window.removeEventListener("storage", handleStorage);
     };
   }, [refresh]);
