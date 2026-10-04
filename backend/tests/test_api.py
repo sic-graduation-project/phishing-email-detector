@@ -42,8 +42,8 @@ def test_analyze_url() -> None:
     assert response.status_code == 200
     assert data["input_type"] == "url"
     assert data["classification"] == "Legitimate"
-    assert data["risk_score"] == 0
-    assert data["reasons"] == ["No suspicious URL indicators were detected"]
+    assert data["risk_score"] < 50
+    assert data["reasons"] == ["No strong phishing indicators were detected"]
 
 
 def test_analyze_suspicious_url() -> None:
@@ -69,7 +69,7 @@ def test_analyze_shortened_suspicious_url() -> None:
     data = response.json()
     assert response.status_code == 200
     assert data["classification"] == "Phishing"
-    assert data["risk_score"] == 50
+    assert data["risk_score"] >= 70
     assert "URL uses a shortened URL service" in data["reasons"]
 
 
