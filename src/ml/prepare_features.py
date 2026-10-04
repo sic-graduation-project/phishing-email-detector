@@ -20,7 +20,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 def create_tfidf_vectorizer() -> TfidfVectorizer:
     return TfidfVectorizer(
-        max_features=10000,
+        max_features=5000,
         ngram_range=(1, 2),
         min_df=3,
         max_df=0.9,
