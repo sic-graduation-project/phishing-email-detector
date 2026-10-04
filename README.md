@@ -393,6 +393,17 @@ the **Samsung Innovation Campus** program. It is not an official Samsung product
 or security service. Samsung and Samsung Innovation Campus names and trademarks
 belong to their respective owners.
 
+## Copyright and License
+
+Copyright © 2026 **Nexus Team**. All rights reserved.
+
+This project is provided for viewing and evaluation as a graduation project.
+Copying, modification, redistribution, publication, deployment, or creation of
+derivative works requires prior written permission from Nexus Team. See the
+[LICENSE](LICENSE) file for the complete terms. Third-party dependencies,
+datasets, names, and trademarks remain subject to their respective licenses
+and ownership terms.
+
 ---
 
 <div align="center">
